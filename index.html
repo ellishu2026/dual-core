@@ -124,7 +124,7 @@
     font-family:var(--mono);font-size:10px;color:var(--muted);
     background:var(--pill-bg);border-radius:8px;padding:6px 9px;
     margin-bottom:8px;
-    display:flex;align-items:center;gap:8px;
+    display:flex;align-items:center;gap:6px;
     white-space:nowrap;overflow-x:auto;
   }
   .readout b{color:var(--ink);flex-shrink:0;}
@@ -134,8 +134,11 @@
     .readout{font-size:9px;gap:6px;}
   }
 
-  .chart-wrap{margin:0 0 10px;}
+  .chart-wrap{margin:0 0 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .chart-wrap svg{width:100%;height:auto;display:block;cursor:crosshair;}
+  @media (max-width:520px){
+    .chart-wrap svg{width:600px;max-width:none;}
+  }
   .axis-label{font-family:var(--mono);font-size:9.5px;fill:var(--muted);}
   .gridline{stroke:var(--line);stroke-width:1;}
 
@@ -182,7 +185,7 @@
   </header>
 
   <div class="pills">
-    <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA180</code> Watch → ≤<code>EMA195</code> Enter → ≤<code>EMA225</code> Add</span></div>
+    <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA180</code> Watch → ≤<code>EMA195</code> Enter <code>30%</code> → ≤<code>EMA225</code> Add <code>75%</code></span></div>
     <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
     <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-21d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
     <div class="pill params"><span class="tag">Parameters</span><span class="txt">Entry <code>30%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code></span></div>
@@ -347,7 +350,7 @@ function fmtCompact(n){ return Number(n).toFixed(2); } // no thousands comma —
 function buildReadoutHTML(chart, idx){
   if(!chart.dates.length) return '';
   const parts = [`<b class="ritem">${fmtDate(chart.dates[idx])}</b>`, `<span class="ritem">Close $${fmtCompact(chart.close[idx])}</span>`];
-  [5,9,180,195,225].forEach(p=>{
+  EMA_ORDER.forEach(p=>{
     parts.push(`<span class="ritem">EMA${p} <span style="color:${emaColor(p)}">$${fmtCompact(chart.ema[String(p)][idx])}</span></span>`);
   });
   return parts.join('');
