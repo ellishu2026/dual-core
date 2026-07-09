@@ -213,7 +213,7 @@ function renderCard(ticker, t){
 // Fetch data straight from GitHub's raw content, not a relative path.
 // This means data freshness depends only on the GitHub Actions commit,
 // not on whether Vercel (or any static host) has redeployed recently.
-const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
+const DATA_URL = 'https://cdn.jsdelivr.net/gh/ellishu2026/dual-core@main/data/signals.json';
 
 fetch(DATA_URL + '?_=' + Date.now())
   .then(r=>{ if(!r.ok) throw new Error('signals.json not found'); return r.json(); })
