@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.0.6"
+VERSION = "1.0.7"
 TICKERS = ["NVDA", "LLY"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "5y"  # enough for EMA225 to stabilize and for a trailing-1y high check
@@ -76,11 +76,15 @@ def build_chart_series(df: pd.DataFrame) -> dict:
     return {"day": day, "week": week, "month": month}
 
 
-def compute_new_high_flag(df: pd.DataFrame) -> pd.DataFrame:
-    """Flags days where the close is a new trailing-1-year high (strictly
-    above every close in the prior ~252 trading days)."""
+TP_HIGH_MULTIPLIER = 1.09  # take-profit's "high" trigger = trailing 1y high x 1.09
+
+
+def compute_tp_trigger_flag(df: pd.DataFrame) -> pd.DataFrame:
+    """Flags days where the close breaks 9% above the trailing 1-year high
+    (prior ~252 trading days) — the take-profit's high-confirmation gate."""
     df["prior_1y_max"] = df["Close"].rolling(window=252, min_periods=1).max().shift(1)
-    df["is_new_high"] = df["Close"] > df["prior_1y_max"]
+    df["tp_trigger_level"] = df["prior_1y_max"] * TP_HIGH_MULTIPLIER
+    df["hit_tp_high"] = df["Close"] >= df["tp_trigger_level"]
     return df
 
 
@@ -88,7 +92,7 @@ def run_state_machine(df: pd.DataFrame) -> dict:
     """Replay the rules day by day. Returns current state + event log."""
     position_pct = 0.0
     aligned = False          # bullish alignment (5>9>20>60) seen since entry
-    new_high = False          # new all-time high seen since entry
+    tp_high_hit = False       # price broke 1y-high*1.09 since entry
     tp_half_done = False     # already took the half-reduce
     armed = True              # entry ladder is "live"; disarmed right after a
                                # stop-loss so a falling knife can't re-trigger
@@ -113,7 +117,7 @@ def run_state_machine(df: pd.DataFrame) -> dict:
         if position_pct > 0 and price <= 0.9 * e225:
             position_pct = 0.0
             aligned = False
-            new_high = False
+            tp_high_hit = False
             tp_half_done = False
             armed = False
             log(date, "Stop-Loss Exit", position_pct)
@@ -137,13 +141,13 @@ def run_state_machine(df: pd.DataFrame) -> dict:
                 aligned = True
                 log(date, "Bullish Stack Confirmed", position_pct)
 
-            if not new_high and bool(row["is_new_high"]):
-                new_high = True
-                log(date, "New 1-Year High", position_pct)
+            if not tp_high_hit and bool(row["hit_tp_high"]):
+                tp_high_hit = True
+                log(date, "TP High Trigger (+9%)", position_pct)
 
             # take-profit ladder only arms once BOTH bullish alignment
             # AND a fresh all-time high have occurred since entry
-            tp_ready = aligned and new_high
+            tp_ready = aligned and tp_high_hit
 
             if tp_ready and not tp_half_done and price < e5:
                 position_pct = position_pct / 2.0
@@ -153,7 +157,7 @@ def run_state_machine(df: pd.DataFrame) -> dict:
             if tp_ready and tp_half_done and price < e9:
                 position_pct = 0.0
                 aligned = False
-                new_high = False
+                tp_high_hit = False
                 tp_half_done = False
                 log(date, "TP Full Exit", position_pct)
 
@@ -182,9 +186,10 @@ def run_state_machine(df: pd.DataFrame) -> dict:
         "position_pct": position_pct,
         "status": status,
         "aligned": aligned,
-        "new_high": new_high,
+        "tp_high_hit": tp_high_hit,
         "tp_half_done": tp_half_done,
         "stop_level": round(float(0.9 * e225), 2),
+        "tp_level": round(float(last["tp_trigger_level"]), 2),
         "last_events": recent_events,  # all state changes within the trailing 1 year
         "chart": build_chart_series(df),
     }
@@ -197,7 +202,7 @@ def fetch_one(ticker: str) -> dict:
     hist = hist.reset_index()
     hist["date_str"] = hist["Date"].dt.strftime("%Y-%m-%d")
     hist = compute_emas(hist)
-    hist = compute_new_high_flag(hist)
+    hist = compute_tp_trigger_flag(hist)
     hist = hist.dropna(subset=[f"ema{p}" for p in EMA_PERIODS]).reset_index(drop=True)
     if hist.empty:
         raise RuntimeError(f"Not enough history for {ticker} to compute EMA225")

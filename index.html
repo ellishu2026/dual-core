@@ -111,10 +111,17 @@
 
   .body-row{display:flex;gap:22px;align-items:flex-start;}
   .chart-col{flex:1;min-width:0;}
-  .log-col{width:230px;flex-shrink:0;}
+  .log-col{width:155px;flex-shrink:0;}
 
-  .chart-wrap{margin:14px 0 10px;}
-  .chart-wrap svg{width:100%;height:auto;display:block;}
+  .readout{
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+    background:var(--pill-bg);border-radius:8px;padding:7px 10px;
+    margin-bottom:8px;white-space:nowrap;overflow-x:auto;
+  }
+  .readout b{color:var(--ink);}
+
+  .chart-wrap{margin:0 0 10px;}
+  .chart-wrap svg{width:100%;height:auto;display:block;cursor:crosshair;}
   .axis-label{font-family:var(--mono);font-size:9.5px;fill:var(--muted);}
   .gridline{stroke:var(--line);stroke-width:1;}
 
@@ -123,15 +130,16 @@
   .legend .swatch{width:12px;height:2px;display:inline-block;border-radius:1px;}
   .legend .swatch.price{height:3px;}
 
-  .stop-note{font-size:11.5px;color:var(--stop);font-family:var(--mono);margin:6px 0 14px;}
+  .stop-note{font-size:11.5px;color:var(--stop);font-family:var(--mono);margin:6px 0 2px;}
+  .tp-note{font-size:11.5px;color:var(--watch);font-family:var(--mono);margin:0 0 14px;}
 
   .log-col .log{border-top:none;padding-top:0;}
-  .log h4{font-size:10.5px;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin:0 0 8px;font-weight:700;}
-  .log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:270px;overflow-y:auto;}
-  .log li{display:flex;flex-direction:column;gap:1px;font-size:11.5px;border-bottom:1px dashed var(--line);padding-bottom:6px;}
+  .log h4{font-size:9px;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);margin:0 0 6px;font-weight:700;}
+  .log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;max-height:270px;overflow-y:auto;}
+  .log li{display:flex;flex-direction:column;gap:1px;font-size:10px;border-bottom:1px dashed var(--line);padding-bottom:5px;}
   .log .a{color:var(--ink);font-weight:600;}
-  .log .d{color:var(--muted);font-family:var(--mono);font-size:10.5px;}
-  .empty{color:var(--muted);font-size:12px;}
+  .log .d{color:var(--muted);font-family:var(--mono);font-size:9px;}
+  .empty{color:var(--muted);font-size:10.5px;}
 
   footer{margin-top:26px;font-size:11px;color:var(--muted);text-align:center;}
   .loading{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
@@ -164,7 +172,7 @@
   <div class="pills">
     <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA180</code> Watch → ≤<code>EMA195</code> Enter → ≤<code>EMA225</code> Add</span></div>
     <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
-    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + new <code>1Y High</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
+    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
     <div class="pill params"><span class="tag">Parameters</span><span class="txt">Entry <code>30%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code></span></div>
   </div>
 
@@ -194,6 +202,7 @@ const TICKER_CLASS = {NVDA:"nvda", LLY:"lly"};
 const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
 
 function emaColor(period){ return EMA_STYLE[period].color; }
 function emaWidth(period){ return EMA_STYLE[period].width; }
@@ -204,44 +213,61 @@ function badgeInfo(t){
   return {cls:'watch', text:t.status};
 }
 
-function buildChartSVG(chart, priceColor){
-  const W = 900, H = 260, padL = 44, padR = 12, padT = 14, padB = 22;
-  const n = chart.dates.length;
-  if(n === 0) return '<svg viewBox="0 0 900 260"></svg>';
+const CHART_W = 900, CHART_H = 260, PAD_L = 44, PAD_R = 12, PAD_T = 14, PAD_B = 22;
 
+function computeScale(chart){
+  const n = chart.dates.length;
   const allVals = chart.close.slice();
   EMA_ORDER.forEach(p => allVals.push(...chart.ema[String(p)]));
   const max = Math.max(...allVals) * 1.02;
   const min = Math.min(...allVals) * 0.98;
   const span = (max - min) || 1;
+  const xOf = i => PAD_L + (n===1 ? 0 : (i/(n-1)) * (CHART_W-PAD_L-PAD_R));
+  const yOf = v => PAD_T + (1 - (v-min)/span) * (CHART_H-PAD_T-PAD_B);
+  return {n, max, min, span, xOf, yOf};
+}
 
-  const xOf = i => padL + (n===1 ? 0 : (i/(n-1)) * (W-padL-padR));
-  const yOf = v => padT + (1 - (v-min)/span) * (H-padT-padB);
+// module-level: which chart data + color is currently shown per ticker,
+// so the hover handler (wired once, called on every mousemove) knows what
+// to read without re-fetching or re-parsing the SVG
+const chartState = {};
+
+function buildChartSVG(chart, priceColor, ticker){
+  const n = chart.dates.length;
+  if(n === 0) return '<svg viewBox="0 0 900 260"></svg>';
+  const {max, span, xOf, yOf} = computeScale(chart);
 
   const pathFor = arr => arr.map((v,i)=> `${i===0?'M':'L'}${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
 
-  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  let svg = `<svg viewBox="0 0 ${CHART_W} ${CHART_H}" xmlns="http://www.w3.org/2000/svg">`;
 
   // horizontal gridlines (4 bands)
   for(let i=0;i<=4;i++){
-    const y = padT + i*(H-padT-padB)/4;
+    const y = PAD_T + i*(CHART_H-PAD_T-PAD_B)/4;
     const val = max - i*(span/4);
-    svg += `<line class="gridline" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"/>`;
+    svg += `<line class="gridline" x1="${PAD_L}" y1="${y.toFixed(1)}" x2="${CHART_W-PAD_R}" y2="${y.toFixed(1)}"/>`;
     svg += `<text class="axis-label" x="4" y="${(y+3).toFixed(1)}">${fmt(val)}</text>`;
   }
 
-  // x-axis date labels: first, mid, last
-  [0, Math.floor((n-1)/2), n-1].forEach(i=>{
-    svg += `<text class="axis-label" x="${xOf(i).toFixed(1)}" y="${H-6}" text-anchor="middle">${chart.dates[i]}</text>`;
+  // x-axis date labels: 5 evenly spaced, formatted M/D
+  const xIdx = n===1 ? [0] : [0,1,2,3,4].map(k => Math.round(k*(n-1)/4));
+  [...new Set(xIdx)].forEach(i=>{
+    svg += `<text class="axis-label" x="${xOf(i).toFixed(1)}" y="${CHART_H-6}" text-anchor="middle">${fmtDate(chart.dates[i])}</text>`;
   });
 
-  // EMA lines (short->long, light->dark gray)
+  // EMA lines (key lines colored/thick, context lines thin gray)
   EMA_ORDER.forEach(p=>{
     svg += `<path d="${pathFor(chart.ema[String(p)])}" fill="none" stroke="${emaColor(p)}" stroke-width="${emaWidth(p)}"/>`;
   });
 
   // price line on top, thick + colored
   svg += `<path d="${pathFor(chart.close)}" fill="none" stroke="${priceColor}" stroke-width="2.6" stroke-linejoin="round"/>`;
+
+  // hover interaction: invisible capture area + guide line + dot, all
+  // hidden until the mouse moves over the chart
+  svg += `<line class="hover-guide" x1="0" x2="0" y1="${PAD_T}" y2="${CHART_H-PAD_B}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="3,3" opacity="0"/>`;
+  svg += `<circle class="hover-dot" r="4" fill="${priceColor}" stroke="#fff" stroke-width="1.5" opacity="0"/>`;
+  svg += `<rect class="hover-rect" data-ticker="${ticker}" x="${PAD_L}" y="0" width="${CHART_W-PAD_L-PAD_R}" height="${CHART_H}" fill="transparent"/>`;
 
   svg += `</svg>`;
   return svg;
@@ -270,6 +296,7 @@ function renderCard(ticker, t){
   const cls = TICKER_CLASS[ticker] || '';
   const color = TICKER_COLOR[ticker] || '#333';
   const b = badgeInfo(t);
+  chartState[ticker] = {chart: t.chart.day, color};
   return `
   <div class="card ${cls}" data-ticker="${ticker}">
     <div class="card-top">
@@ -287,25 +314,78 @@ function renderCard(ticker, t){
     <div class="date">As of ${t.date} close</div>
     <div class="body-row">
       <div class="chart-col">
-        <div class="chart-wrap" id="chart-${ticker}">${buildChartSVG(t.chart.day, color)}</div>
+        <div class="readout" id="readout-${ticker}">${buildReadoutHTML(t.chart.day, t.chart.day.dates.length-1)}</div>
+        <div class="chart-wrap" id="chart-${ticker}">${buildChartSVG(t.chart.day, color, ticker)}</div>
         ${buildLegend(color)}
         <div class="stop-note">Stop level: $${fmt(t.stop_level)}</div>
+        <div class="tp-note">Take-profit trigger: $${fmt(t.tp_level)} (1Y high ×1.09)</div>
       </div>
       <div class="log-col">${renderLog(t)}</div>
     </div>
   </div>`;
 }
 
+function buildReadoutHTML(chart, idx){
+  if(!chart.dates.length) return '';
+  const parts = [`<b>${fmtDate(chart.dates[idx])}</b>`, `Close $${fmt(chart.close[idx])}`];
+  [5,9,180,195,225].forEach(p=>{
+    parts.push(`EMA${p} <span style="color:${emaColor(p)}">$${fmt(chart.ema[String(p)][idx])}</span>`);
+  });
+  return parts.join(' &nbsp;·&nbsp; ');
+}
+
+function wireChartHover(ticker){
+  const container = document.getElementById(`chart-${ticker}`);
+  const svg = container.querySelector('svg');
+  const rect = svg.querySelector('.hover-rect');
+  const guide = svg.querySelector('.hover-guide');
+  const dot = svg.querySelector('.hover-dot');
+  const readout = document.getElementById(`readout-${ticker}`);
+  if(!rect) return;
+
+  const showIndex = (idx) => {
+    const {chart} = chartState[ticker];
+    const {xOf, yOf} = computeScale(chart);
+    const x = xOf(idx);
+    guide.setAttribute('x1', x); guide.setAttribute('x2', x); guide.setAttribute('opacity', 1);
+    dot.setAttribute('cx', x); dot.setAttribute('cy', yOf(chart.close[idx])); dot.setAttribute('opacity', 1);
+    readout.innerHTML = buildReadoutHTML(chart, idx);
+  };
+  const resetToLatest = () => {
+    const {chart} = chartState[ticker];
+    guide.setAttribute('opacity', 0); dot.setAttribute('opacity', 0);
+    readout.innerHTML = buildReadoutHTML(chart, chart.dates.length-1);
+  };
+
+  rect.addEventListener('mousemove', (evt)=>{
+    const {chart} = chartState[ticker];
+    const n = chart.dates.length;
+    if(n===0) return;
+    const svgRect = svg.getBoundingClientRect();
+    const svgX = (evt.clientX - svgRect.left) * (CHART_W / svgRect.width);
+    const step = (CHART_W-PAD_L-PAD_R) / Math.max(n-1,1);
+    let idx = Math.round((svgX - PAD_L) / step);
+    idx = Math.max(0, Math.min(n-1, idx));
+    showIndex(idx);
+  });
+  rect.addEventListener('mouseleave', resetToLatest);
+}
+
 function wireToggles(data){
   document.querySelectorAll('.tf-toggle').forEach(toggle=>{
     const ticker = toggle.dataset.ticker;
+    wireChartHover(ticker); // initial DAY view
     toggle.querySelectorAll('.tf-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         toggle.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
         const tf = btn.dataset.tf;
         const color = TICKER_COLOR[ticker] || '#333';
-        document.getElementById(`chart-${ticker}`).innerHTML = buildChartSVG(data.tickers[ticker].chart[tf], color);
+        const chart = data.tickers[ticker].chart[tf];
+        chartState[ticker] = {chart, color};
+        document.getElementById(`chart-${ticker}`).innerHTML = buildChartSVG(chart, color, ticker);
+        document.getElementById(`readout-${ticker}`).innerHTML = buildReadoutHTML(chart, chart.dates.length-1);
+        wireChartHover(ticker); // re-wire since innerHTML replaced the SVG
       });
     });
   });

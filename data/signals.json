@@ -1,5 +1,5 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "updated_at": "2026-07-09T00:00:00+00:00",
   "tickers": {
     "NVDA": {
@@ -65,7 +65,8 @@
           }
         }
       },
-      "new_high": false
+      "tp_high_hit": false,
+      "tp_level": 0.0
     },
     "LLY": {
       "date": "placeholder \u2014 run fetch_data.py",
@@ -130,7 +131,8 @@
           }
         }
       },
-      "new_high": false
+      "tp_high_hit": false,
+      "tp_level": 0.0
     }
   }
 }
