@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 TICKERS = ["NVDA", "LLY", "SOXL"]  # SOXL added as a watch-only third ticker —
                                      # runs the same entry/stop/TP engine,
                                      # just for reference/observation

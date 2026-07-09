@@ -210,6 +210,13 @@
 // doesn't reliably clear that — it stayed stale for hours in testing.
 // raw.githubusercontent.com is close to real-time and fine for normal
 // (non-bursty) personal-dashboard traffic.
+// This is the FRONTEND's own version, independent of fetch_data.py's
+// VERSION constant. The two used to be conflated (page showed
+// data.version, which only updates when the data pipeline actually runs)
+// — that made UI-only deploys look "not updated" since no new fetch had
+// happened. Bump this by hand whenever index.html itself changes.
+const APP_VERSION = '1.1.4';
+
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 // key EMAs the strategy actually acts on get distinct colors + a thicker
@@ -422,7 +429,7 @@ function wireToggles(data){
 fetch(DATA_URL + '?_=' + Date.now())
   .then(r=>{ if(!r.ok) throw new Error('signals.json not found'); return r.json(); })
   .then(data=>{
-    document.getElementById('verPill').textContent = 'v' + data.version;
+    document.getElementById('verPill').textContent = 'v' + APP_VERSION;
     document.getElementById('meta').textContent =
       `Source yfinance · Updated ${new Date(data.updated_at).toLocaleString('en-US')}`;
     const stack = document.getElementById('stack');
