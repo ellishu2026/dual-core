@@ -44,7 +44,7 @@
   .meta{font-size:11.5px;color:var(--muted);text-align:right;padding-top:4px;}
 
   /* rule pills */
-  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
+  .pills{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
   .pill{
     background:var(--card);
     border:1px solid var(--line);
@@ -109,6 +109,10 @@
   }
   .tf-btn.active{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,0.08);}
 
+  .body-row{display:flex;gap:22px;align-items:flex-start;}
+  .chart-col{flex:1;min-width:0;}
+  .log-col{width:230px;flex-shrink:0;}
+
   .chart-wrap{margin:14px 0 10px;}
   .chart-wrap svg{width:100%;height:auto;display:block;}
   .axis-label{font-family:var(--mono);font-size:9.5px;fill:var(--muted);}
@@ -121,17 +125,25 @@
 
   .stop-note{font-size:11.5px;color:var(--stop);font-family:var(--mono);margin:6px 0 14px;}
 
-  .log{border-top:1px solid var(--line);padding-top:12px;}
+  .log-col .log{border-top:none;padding-top:0;}
   .log h4{font-size:10.5px;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin:0 0 8px;font-weight:700;}
-  .log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;}
-  .log li{display:flex;justify-content:space-between;font-size:12px;flex-wrap:wrap;gap:4px;}
+  .log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:270px;overflow-y:auto;}
+  .log li{display:flex;flex-direction:column;gap:1px;font-size:11.5px;border-bottom:1px dashed var(--line);padding-bottom:6px;}
   .log .a{color:var(--ink);font-weight:600;}
-  .log .d{color:var(--muted);font-family:var(--mono);}
+  .log .d{color:var(--muted);font-family:var(--mono);font-size:10.5px;}
   .empty{color:var(--muted);font-size:12px;}
 
   footer{margin-top:26px;font-size:11px;color:var(--muted);text-align:center;}
   .loading{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
 
+  @media (max-width:760px){
+    .body-row{flex-direction:column;}
+    .log-col{width:100%;}
+    .log-col .log{border-top:1px solid var(--line);padding-top:12px;}
+  }
+  @media (max-width:640px){
+    .pills{grid-template-columns:1fr;}
+  }
   @media (max-width:520px){
     .price{font-size:17px;}
     .ticker{font-size:19px;}
@@ -166,17 +178,25 @@
 <script>
 const DATA_URL = 'https://cdn.jsdelivr.net/gh/ellishu2026/dual-core@main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
+// key EMAs the strategy actually acts on get distinct colors + a thicker
+// stroke; 20/60/120 are context-only and stay thin, light gray
+const EMA_STYLE = {
+  5:   {color:'#E07A5F', width:2.2},   // fast — entry/TP trigger line
+  9:   {color:'#E9A23B', width:2.2},   // fast — TP full-exit trigger line
+  20:  {color:'#D8D6D0', width:1},
+  60:  {color:'#C7C4BB', width:1},
+  120: {color:'#B6B2A6', width:1},
+  180: {color:'#4A7C82', width:2},     // watch threshold
+  195: {color:'#3D5A80', width:2},     // 30% entry threshold
+  225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
+};
 const TICKER_CLASS = {NVDA:"nvda", LLY:"lly"};
 const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-function emaColor(period){
-  // lighter gray for short EMAs, darker for long EMAs
-  const idx = EMA_ORDER.indexOf(period);
-  const lightness = 82 - idx * 8; // 82% down to ~26%
-  return `hsl(0,0%,${lightness}%)`;
-}
+function emaColor(period){ return EMA_STYLE[period].color; }
+function emaWidth(period){ return EMA_STYLE[period].width; }
 
 function badgeInfo(t){
   if(t.status.includes('Stop-Loss')) return {cls:'stop', text:t.status};
@@ -217,7 +237,7 @@ function buildChartSVG(chart, priceColor){
 
   // EMA lines (short->long, light->dark gray)
   EMA_ORDER.forEach(p=>{
-    svg += `<path d="${pathFor(chart.ema[String(p)])}" fill="none" stroke="${emaColor(p)}" stroke-width="1.4"/>`;
+    svg += `<path d="${pathFor(chart.ema[String(p)])}" fill="none" stroke="${emaColor(p)}" stroke-width="${emaWidth(p)}"/>`;
   });
 
   // price line on top, thick + colored
@@ -265,10 +285,14 @@ function renderCard(ticker, t){
       </div>
     </div>
     <div class="date">As of ${t.date} close</div>
-    <div class="chart-wrap" id="chart-${ticker}">${buildChartSVG(t.chart.day, color)}</div>
-    ${buildLegend(color)}
-    <div class="stop-note">Stop level: $${fmt(t.stop_level)}</div>
-    ${renderLog(t)}
+    <div class="body-row">
+      <div class="chart-col">
+        <div class="chart-wrap" id="chart-${ticker}">${buildChartSVG(t.chart.day, color)}</div>
+        ${buildLegend(color)}
+        <div class="stop-note">Stop level: $${fmt(t.stop_level)}</div>
+      </div>
+      <div class="log-col">${renderLog(t)}</div>
+    </div>
   </div>`;
 }
 
