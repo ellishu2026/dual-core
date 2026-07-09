@@ -41,6 +41,7 @@
     color:var(--ink);
     font-family:var(--sans);
     -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
   }
   .wrap{max-width:1040px;margin:0 auto;padding:26px 18px 60px;}
 
@@ -131,7 +132,7 @@
     background:var(--pill-bg);border-radius:8px;padding:6px 8px;
     margin-bottom:8px;
     display:flex;align-items:center;gap:4px;
-    white-space:nowrap;overflow-x:auto;
+    white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;
   }
   .readout b{color:var(--ink);flex-shrink:0;}
   .readout .ritem{flex-shrink:0;}
@@ -140,8 +141,8 @@
     .readout{font-size:7.5px;gap:3px;}
   }
 
-  .chart-wrap{margin:0 0 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .chart-wrap svg{width:100%;height:auto;display:block;cursor:crosshair;}
+  .chart-wrap{margin:0 0 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;}
+  .chart-wrap svg{width:100%;height:auto;display:block;cursor:crosshair;touch-action:pan-x;}
   @media (max-width:520px){
     .chart-wrap svg{width:600px;max-width:none;}
   }
@@ -215,7 +216,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.1.4';
+const APP_VERSION = '1.1.6';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
@@ -224,9 +225,9 @@ const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 const EMA_STYLE = {
   5:   {color:'#E07A5F', width:2.2},   // fast — entry/TP trigger line
   9:   {color:'#E9A23B', width:2.2},   // fast — TP full-exit trigger line
-  20:  {color:'#D8D6D0', width:1},
-  60:  {color:'#C7C4BB', width:1},
-  120: {color:'#B6B2A6', width:1},
+  20:  {color:'#8F8B7E', width:1.4},
+  60:  {color:'#6E6A5A', width:1.4},
+  120: {color:'#4D4A3D', width:1.4},
   180: {color:'#4A7C82', width:2},     // watch threshold
   195: {color:'#3D5A80', width:2},     // 30% entry threshold
   225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
@@ -300,7 +301,7 @@ function buildChartSVG(chart, priceColor, ticker){
   // hidden until the mouse moves over the chart
   svg += `<line class="hover-guide" x1="0" x2="0" y1="${PAD_T}" y2="${CHART_H-PAD_B}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="3,3" opacity="0"/>`;
   svg += `<circle class="hover-dot" r="4" fill="${priceColor}" stroke="#fff" stroke-width="1.5" opacity="0"/>`;
-  svg += `<rect class="hover-rect" data-ticker="${ticker}" x="${PAD_L}" y="0" width="${CHART_W-PAD_L-PAD_R}" height="${CHART_H}" fill="transparent"/>`;
+  svg += `<rect class="hover-rect" data-ticker="${ticker}" x="${PAD_L}" y="0" width="${CHART_W-PAD_L-PAD_R}" height="${CHART_H}" fill="transparent" style="touch-action:pan-x"/>`;
 
   svg += `</svg>`;
   return svg;
