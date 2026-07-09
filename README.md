@@ -55,11 +55,13 @@ dual-core/
 └── .github/workflows/daily_update.yml
 ```
 
-## 版本记录
+## Version Log
 
-- **v1.0.1**：初版。双标的（NVDA/LLY）、EMA 八线、进场三档/止损/止盈状态机、单页浅色仪表盘、GitHub Actions 每日自动刷新。
-
-后续每次迭代版本号 +1（v1.0.2、v1.0.3…），修改 `fetch_data.py` 顶部的 `VERSION` 常量并同步更新本文件版本记录。
+- **v1.0.1**: Initial release. Two tickers (NVDA/LLY), 8-line EMA, entry ladder/stop-loss/take-profit state machine, single-page light dashboard, GitHub Actions daily refresh.
+- **v1.0.2**: All-English UI. Rules condensed into 4 pills (Entry/Stop Loss/Take Profit/Parameters). Cards switched to full-width stacked layout. Added a Day/Week/Month EMA line chart per ticker (same daily-computed EMAs, just sampled at different granularity — no separate weekly/monthly EMA calculation). Re-arm threshold after stop-loss changed from EMA180 to EMA225. Flat "no position" state simplified to always show "Watching".
+- **v1.0.3**: Recent Actions log now keeps every state-change event within the trailing 1 year (was capped at the last 5), with a scrollable list on the frontend so a busy year doesn't stretch the page.
+- **v1.0.4**: Take-profit now requires BOTH bullish stack (5>9>20>60) AND a new all-time high since entry before the EMA5/EMA9 exit ladder arms. Data pull switched from 5y to full available history (`period="max"`) so "all-time high" is a true ATH, not just a 5-year-window high.
+- **v1.0.5**: Corrected the take-profit high check from all-time high to a trailing 1-year high (252 trading days) — much more attainable for NVDA/LLY and closer to the intended signal. Data pull reverted to 5y (full history is no longer needed).
 
 ## 说明
 

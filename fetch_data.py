@@ -31,10 +31,10 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.0.1"
+VERSION = "1.0.5"
 TICKERS = ["NVDA", "LLY"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
-LOOKBACK = "5y"  # enough history for EMA225 to fully stabilize
+LOOKBACK = "5y"  # enough for EMA225 to stabilize and for a trailing-1y high check
 
 
 def compute_emas(df: pd.DataFrame) -> pd.DataFrame:
@@ -43,10 +43,52 @@ def compute_emas(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+CHART_POINTS = 20  # default number of points shown per timeframe
+
+
+def build_chart_series(df: pd.DataFrame) -> dict:
+    """Sample the daily EMA series at day/week/month granularity for
+    charting. These are the SAME daily-computed EMAs the strategy trades
+    on — 'week'/'month' just pick the last trading day of each week/month
+    so the chart can zoom out without inventing weekly/monthly EMAs."""
+    d = df.copy()
+    d["dt"] = pd.to_datetime(d["date_str"])
+
+    def pack(sub: pd.DataFrame) -> dict:
+        sub = sub.tail(CHART_POINTS)
+        return {
+            "dates": sub["date_str"].tolist(),
+            "close": [round(float(v), 2) for v in sub["Close"]],
+            "ema": {
+                str(p): [round(float(v), 2) for v in sub[f"ema{p}"]]
+                for p in EMA_PERIODS
+            },
+        }
+
+    day = pack(d)
+
+    d["week_period"] = d["dt"].dt.to_period("W")
+    week = pack(d.groupby("week_period", as_index=False).tail(1))
+
+    d["month_period"] = d["dt"].dt.to_period("M")
+    month = pack(d.groupby("month_period", as_index=False).tail(1))
+
+    return {"day": day, "week": week, "month": month}
+
+
+def compute_new_high_flag(df: pd.DataFrame) -> pd.DataFrame:
+    """Flags days where the close is a new trailing-1-year high (strictly
+    above every close in the prior ~252 trading days)."""
+    df["prior_1y_max"] = df["Close"].rolling(window=252, min_periods=1).max().shift(1)
+    df["is_new_high"] = df["Close"] > df["prior_1y_max"]
+    return df
+
+
 def run_state_machine(df: pd.DataFrame) -> dict:
     """Replay the rules day by day. Returns current state + event log."""
     position_pct = 0.0
     aligned = False          # bullish alignment (5>9>20>60) seen since entry
+    new_high = False          # new all-time high seen since entry
     tp_half_done = False     # already took the half-reduce
     armed = True              # entry ladder is "live"; disarmed right after a
                                # stop-loss so a falling knife can't re-trigger
@@ -71,9 +113,10 @@ def run_state_machine(df: pd.DataFrame) -> dict:
         if position_pct > 0 and price <= 0.9 * e225:
             position_pct = 0.0
             aligned = False
+            new_high = False
             tp_half_done = False
             armed = False
-            log(date, "止损清仓", position_pct)
+            log(date, "Stop-Loss Exit", position_pct)
             continue
 
         # ---- 2) Entry / scale-in ladder ----
@@ -81,42 +124,56 @@ def run_state_machine(df: pd.DataFrame) -> dict:
             if price <= e225:
                 if position_pct < 75:
                     position_pct = 75.0
-                    log(date, "加仓至75%", position_pct)
+                    log(date, "Add to 75%", position_pct)
             elif price <= e195:
                 if position_pct < 30:
                     position_pct = 30.0
-                    log(date, "开仓30%", position_pct)
+                    log(date, "Enter 30%", position_pct)
             # price <= e180 alone is watch-only, no position change, no log spam
 
         # ---- 3) Take profit (only relevant once in a position) ----
         if position_pct > 0:
             if not aligned and (e5 > e9 > e20 > e60):
                 aligned = True
-                log(date, "多头排列确认", position_pct)
+                log(date, "Bullish Stack Confirmed", position_pct)
 
-            if aligned and not tp_half_done and price < e5:
+            if not new_high and bool(row["is_new_high"]):
+                new_high = True
+                log(date, "New 1-Year High", position_pct)
+
+            # take-profit ladder only arms once BOTH bullish alignment
+            # AND a fresh all-time high have occurred since entry
+            tp_ready = aligned and new_high
+
+            if tp_ready and not tp_half_done and price < e5:
                 position_pct = position_pct / 2.0
                 tp_half_done = True
-                log(date, "止盈减仓一半", position_pct)
+                log(date, "TP Half Exit", position_pct)
 
-            if aligned and tp_half_done and price < e9:
+            if tp_ready and tp_half_done and price < e9:
                 position_pct = 0.0
                 aligned = False
+                new_high = False
                 tp_half_done = False
-                log(date, "止盈清仓", position_pct)
+                log(date, "TP Full Exit", position_pct)
 
     last = df.iloc[-1]
     price = last["Close"]
     e180, e195, e225 = last["ema180"], last["ema195"], last["ema225"]
 
+    # keep every state-change event from the trailing 1 year, not just a
+    # fixed count — a quiet year shows few events, an active one shows more
+    one_year_ago = pd.to_datetime(last["date_str"]) - pd.Timedelta(days=365)
+    recent_events = [e for e in events if pd.to_datetime(e["date"]) >= one_year_ago]
+
     # current display status — anything that isn't currently in a position
     # (i.e. no entry/stop/take-profit condition is active) just reads 观察
     if position_pct == 0:
-        status = "观察"
+        status = "Watching"
     elif tp_half_done:
-        status = f"持仓{position_pct:.0f}%（已止盈减半）"
+        status = f"Holding {position_pct:.0f}% (TP Half Taken)"
     else:
-        status = f"持仓{position_pct:.0f}%"
+        status = f"Holding {position_pct:.0f}%"
 
     return {
         "date": last["date_str"],
@@ -125,9 +182,11 @@ def run_state_machine(df: pd.DataFrame) -> dict:
         "position_pct": position_pct,
         "status": status,
         "aligned": aligned,
+        "new_high": new_high,
         "tp_half_done": tp_half_done,
         "stop_level": round(float(0.9 * e225), 2),
-        "last_events": events[-5:],  # most recent 5 state changes
+        "last_events": recent_events,  # all state changes within the trailing 1 year
+        "chart": build_chart_series(df),
     }
 
 
@@ -138,6 +197,7 @@ def fetch_one(ticker: str) -> dict:
     hist = hist.reset_index()
     hist["date_str"] = hist["Date"].dt.strftime("%Y-%m-%d")
     hist = compute_emas(hist)
+    hist = compute_new_high_flag(hist)
     hist = hist.dropna(subset=[f"ema{p}" for p in EMA_PERIODS]).reset_index(drop=True)
     if hist.empty:
         raise RuntimeError(f"Not enough history for {ticker} to compute EMA225")

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>双核 · NVDA / LLY EMA 信号台</title>
+<title>Dual Core · NVDA / LLY EMA Signals</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <style>
   :root{
@@ -22,8 +22,9 @@
     --stop-soft:#F7E9E7;
     --hold:#2F7D4F;
     --hold-soft:#E6F2EA;
+    --pill-bg:#F1F0EB;
     --mono: "SF Mono","IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
-    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;}
   body{
@@ -33,201 +34,274 @@
     font-family:var(--sans);
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 18px 60px;}
 
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;}
+  header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
   .brand{display:flex;align-items:center;gap:12px;}
-  .brand img{width:38px;height:38px;display:block;}
-  .brand h1{font-size:20px;margin:0;letter-spacing:0.2px;font-weight:700;}
-  .brand .sub{font-size:12px;color:var(--muted);margin-top:2px;}
-  .meta{font-size:12px;color:var(--muted);text-align:right;}
-  .meta .ver{display:inline-block;margin-left:8px;padding:2px 7px;border:1px solid var(--line);border-radius:20px;font-family:var(--mono);}
+  .brand img{width:36px;height:36px;display:block;}
+  .brand h1{font-size:20px;margin:0;letter-spacing:0.2px;font-weight:800;display:flex;align-items:center;gap:8px;}
+  .ver{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:20px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);}
+  .meta{font-size:11.5px;color:var(--muted);text-align:right;padding-top:4px;}
 
-  .rules{
-    margin:22px 0 26px;
-    padding:14px 16px;
+  /* rule pills */
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
+  .pill{
     background:var(--card);
     border:1px solid var(--line);
-    border-radius:10px;
-    font-size:12.5px;
-    color:var(--muted);
-    line-height:1.9;
+    border-radius:999px;
+    padding:8px 14px;
+    font-size:12px;
+    line-height:1.4;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex:0 1 auto;
   }
-  .rules b{color:var(--ink);font-weight:600;}
+  .pill .tag{
+    font-size:10px;font-weight:800;letter-spacing:0.5px;
+    text-transform:uppercase;color:#fff;background:var(--ink);
+    padding:2px 7px;border-radius:999px;flex-shrink:0;
+  }
+  .pill.entry .tag{background:var(--hold);}
+  .pill.stop .tag{background:var(--stop);}
+  .pill.tp .tag{background:var(--watch);}
+  .pill.params .tag{background:#5B5F66;}
+  .pill span.txt{color:var(--ink);}
+  .pill code{font-family:var(--mono);font-size:11.5px;background:var(--pill-bg);padding:1px 5px;border-radius:4px;}
 
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-  @media (max-width:760px){.grid{grid-template-columns:1fr;}}
+  /* ticker cards - full width, stacked */
+  .stack{display:flex;flex-direction:column;gap:18px;}
 
   .card{
     background:var(--card);
     border:1px solid var(--line);
     border-radius:14px;
-    padding:20px 20px 22px;
+    padding:20px 22px 22px;
   }
   .card.nvda{border-top:3px solid var(--nvda);}
   .card.lly{border-top:3px solid var(--lly);}
 
-  .card-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px;}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+  .card-top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
   .ticker{font-size:22px;font-weight:800;letter-spacing:0.3px;}
   .ticker.nvda{color:var(--nvda);}
   .ticker.lly{color:var(--lly);}
-  .price{font-family:var(--mono);font-size:22px;font-weight:600;}
-  .date{font-size:11.5px;color:var(--muted);margin-bottom:14px;}
+  .price{font-family:var(--mono);font-size:20px;font-weight:600;}
+  .date{font-size:11px;color:var(--muted);}
 
   .badge{
     display:inline-block;
-    font-size:13px;
+    font-size:12.5px;
     font-weight:700;
     padding:5px 12px;
     border-radius:20px;
-    margin-bottom:16px;
   }
   .badge.watch{background:var(--watch-soft);color:var(--watch);}
   .badge.hold{background:var(--hold-soft);color:var(--hold);}
-  .badge.flat{background:#F1F1EE;color:var(--muted);}
   .badge.stop{background:var(--stop-soft);color:var(--stop);}
 
-  .ladder{position:relative;height:220px;margin:8px 4px 20px 54px;}
-  .rail{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line);border-radius:3px;}
-  .rail .fillzone{position:absolute;left:0;width:3px;border-radius:3px;}
-  .tick{position:absolute;left:-4px;width:11px;height:2px;}
-  .tick .lbl{
-    position:absolute;left:16px;top:-7px;
-    font-family:var(--mono);font-size:11px;color:var(--muted);
-    white-space:nowrap;
+  /* timeframe toggle */
+  .tf-toggle{display:flex;gap:4px;background:var(--pill-bg);border-radius:8px;padding:3px;}
+  .tf-btn{
+    border:none;background:transparent;font-family:var(--sans);
+    font-size:11.5px;font-weight:700;letter-spacing:0.3px;
+    padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--muted);
   }
-  .tick .val{color:var(--ink);font-weight:600;}
-  .price-marker{
-    position:absolute;left:-54px;width:0;
-    display:flex;align-items:center;gap:6px;
-  }
-  .price-marker .dot{width:10px;height:10px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--paper);}
-  .price-marker .tag{
-    font-family:var(--mono);font-weight:700;font-size:12px;
-    background:var(--ink);color:#fff;padding:2px 6px;border-radius:5px;
-  }
-  .stop-line{position:absolute;left:-14px;right:-200px;border-top:1.5px dashed var(--stop);opacity:0.55;}
-  .stop-line .stag{position:absolute;right:0;top:-16px;font-size:10px;color:var(--stop);font-family:var(--mono);}
+  .tf-btn.active{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,0.08);}
+
+  .chart-wrap{margin:14px 0 10px;}
+  .chart-wrap svg{width:100%;height:auto;display:block;}
+  .axis-label{font-family:var(--mono);font-size:9.5px;fill:var(--muted);}
+  .gridline{stroke:var(--line);stroke-width:1;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px;font-size:10.5px;color:var(--muted);font-family:var(--mono);}
+  .legend .item{display:flex;align-items:center;gap:4px;}
+  .legend .swatch{width:12px;height:2px;display:inline-block;border-radius:1px;}
+  .legend .swatch.price{height:3px;}
+
+  .stop-note{font-size:11.5px;color:var(--stop);font-family:var(--mono);margin:6px 0 14px;}
 
   .log{border-top:1px solid var(--line);padding-top:12px;}
-  .log h4{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin:0 0 8px;font-weight:600;}
-  .log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
-  .log li{display:flex;justify-content:space-between;font-size:12.5px;}
+  .log h4{font-size:10.5px;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin:0 0 8px;font-weight:700;}
+  .log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;}
+  .log li{display:flex;justify-content:space-between;font-size:12px;flex-wrap:wrap;gap:4px;}
   .log .a{color:var(--ink);font-weight:600;}
   .log .d{color:var(--muted);font-family:var(--mono);}
-  .empty{color:var(--muted);font-size:12.5px;}
+  .empty{color:var(--muted);font-size:12px;}
 
-  footer{margin-top:28px;font-size:11.5px;color:var(--muted);text-align:center;}
+  footer{margin-top:26px;font-size:11px;color:var(--muted);text-align:center;}
   .loading{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
+
+  @media (max-width:520px){
+    .price{font-size:17px;}
+    .ticker{font-size:19px;}
+    .pill{font-size:11px;padding:7px 11px;}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="brand">
-      <img src="logo.svg" alt="双核">
-      <div>
-        <h1>双核 Dual Core</h1>
-        <div class="sub">NVDA · LLY EMA 信号台</div>
-      </div>
+      <img src="logo.svg" alt="Dual Core">
+      <h1>Dual Core <span class="ver" id="verPill">v—</span></h1>
     </div>
-    <div class="meta" id="meta">加载中…</div>
+    <div class="meta" id="meta">Loading…</div>
   </header>
 
-  <div class="rules">
-    <b>进场</b>：价 ≤ EMA180 观察 → 价 ≤ EMA195 开仓30% → 价 ≤ EMA225 加仓至75%　·　
-    <b>止损</b>：价 ≤ 0.9×EMA225 清仓　·　
-    <b>止盈</b>：多头排列(5&gt;9&gt;20&gt;60)后，价 &lt; EMA5 减半，价 &lt; EMA9 清仓
+  <div class="pills">
+    <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA180</code> Watch → ≤<code>EMA195</code> Enter → ≤<code>EMA225</code> Add</span></div>
+    <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
+    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + new <code>1Y High</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
+    <div class="pill params"><span class="tag">Parameters</span><span class="txt">Entry <code>30%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code></span></div>
   </div>
 
-  <div class="grid" id="grid">
-    <div class="loading">正在读取信号数据…</div>
+  <div class="stack" id="stack">
+    <div class="loading">Loading signal data…</div>
   </div>
 
   <footer id="footer"></footer>
 </div>
 
 <script>
-const EMA_ORDER = [225,195,180,120,60,20,9,5]; // top(high) to bottom(low) on the rail, longest period first
+const DATA_URL = 'https://cdn.jsdelivr.net/gh/ellishu2026/dual-core@main/data/signals.json';
+const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 const TICKER_CLASS = {NVDA:"nvda", LLY:"lly"};
+const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-function badgeInfo(t){
-  if(t.status.includes('止损')) return {cls:'stop', text:t.status};
-  if(t.position_pct>0) return {cls:'hold', text:t.status};
-  if(t.status==='观察') return {cls:'watch', text:t.status};
-  return {cls:'flat', text:t.status};
+function emaColor(period){
+  // lighter gray for short EMAs, darker for long EMAs
+  const idx = EMA_ORDER.indexOf(period);
+  const lightness = 82 - idx * 8; // 82% down to ~26%
+  return `hsl(0,0%,${lightness}%)`;
 }
 
-function renderLadder(t){
-  const vals = EMA_ORDER.map(p=>t.ema[String(p)]);
-  const allVals = vals.concat([t.price, t.stop_level]);
-  const max = Math.max(...allVals)*1.01;
-  const min = Math.min(...allVals)*0.99;
-  const span = max-min;
-  const yOf = v => 8 + (1 - (v-min)/span) * (220-16);
+function badgeInfo(t){
+  if(t.status.includes('Stop-Loss')) return {cls:'stop', text:t.status};
+  if(t.position_pct>0) return {cls:'hold', text:t.status};
+  return {cls:'watch', text:t.status};
+}
 
-  let html = '<div class="ladder"><div class="rail"></div>';
-  EMA_ORDER.forEach(p=>{
-    const v = t.ema[String(p)];
-    const y = yOf(v);
-    html += `<div class="tick" style="top:${y}px;background:var(--line)">
-      <span class="lbl">EMA${p} <span class="val">${fmt(v)}</span></span>
-    </div>`;
+function buildChartSVG(chart, priceColor){
+  const W = 900, H = 260, padL = 44, padR = 12, padT = 14, padB = 22;
+  const n = chart.dates.length;
+  if(n === 0) return '<svg viewBox="0 0 900 260"></svg>';
+
+  const allVals = chart.close.slice();
+  EMA_ORDER.forEach(p => allVals.push(...chart.ema[String(p)]));
+  const max = Math.max(...allVals) * 1.02;
+  const min = Math.min(...allVals) * 0.98;
+  const span = (max - min) || 1;
+
+  const xOf = i => padL + (n===1 ? 0 : (i/(n-1)) * (W-padL-padR));
+  const yOf = v => padT + (1 - (v-min)/span) * (H-padT-padB);
+
+  const pathFor = arr => arr.map((v,i)=> `${i===0?'M':'L'}${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // horizontal gridlines (4 bands)
+  for(let i=0;i<=4;i++){
+    const y = padT + i*(H-padT-padB)/4;
+    const val = max - i*(span/4);
+    svg += `<line class="gridline" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"/>`;
+    svg += `<text class="axis-label" x="4" y="${(y+3).toFixed(1)}">${fmt(val)}</text>`;
+  }
+
+  // x-axis date labels: first, mid, last
+  [0, Math.floor((n-1)/2), n-1].forEach(i=>{
+    svg += `<text class="axis-label" x="${xOf(i).toFixed(1)}" y="${H-6}" text-anchor="middle">${chart.dates[i]}</text>`;
   });
-  const stopY = yOf(t.stop_level);
-  html += `<div class="stop-line" style="top:${stopY}px"><span class="stag">止损线 ${fmt(t.stop_level)}</span></div>`;
-  const priceY = yOf(t.price);
-  html += `<div class="price-marker" style="top:${priceY-5}px"><span class="dot"></span><span class="tag">${fmt(t.price)}</span></div>`;
-  html += '</div>';
+
+  // EMA lines (short->long, light->dark gray)
+  EMA_ORDER.forEach(p=>{
+    svg += `<path d="${pathFor(chart.ema[String(p)])}" fill="none" stroke="${emaColor(p)}" stroke-width="1.4"/>`;
+  });
+
+  // price line on top, thick + colored
+  svg += `<path d="${pathFor(chart.close)}" fill="none" stroke="${priceColor}" stroke-width="2.6" stroke-linejoin="round"/>`;
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function buildLegend(priceColor){
+  let html = `<div class="legend"><span class="item"><span class="swatch price" style="background:${priceColor}"></span>Close</span>`;
+  EMA_ORDER.forEach(p=>{
+    html += `<span class="item"><span class="swatch" style="background:${emaColor(p)}"></span>EMA${p}</span>`;
+  });
+  html += `</div>`;
   return html;
 }
 
 function renderLog(t){
   if(!t.last_events || t.last_events.length===0){
-    return '<div class="log"><h4>近期操作</h4><div class="empty">暂无状态变化记录</div></div>';
+    return '<div class="log"><h4>Recent Actions (Past 1Y)</h4><div class="empty">No state changes in the past year</div></div>';
   }
   const items = t.last_events.slice().reverse().map(e=>
-    `<li><span class="a">${e.action}（${e.position_pct}%）</span><span class="d">${e.date}</span></li>`
+    `<li><span class="a">${e.action} (${e.position_pct}%)</span><span class="d">${e.date}</span></li>`
   ).join('');
-  return `<div class="log"><h4>近期操作</h4><ul>${items}</ul></div>`;
+  return `<div class="log"><h4>Recent Actions (Past 1Y)</h4><ul>${items}</ul></div>`;
 }
 
 function renderCard(ticker, t){
   const cls = TICKER_CLASS[ticker] || '';
+  const color = TICKER_COLOR[ticker] || '#333';
   const b = badgeInfo(t);
   return `
-  <div class="card ${cls}">
+  <div class="card ${cls}" data-ticker="${ticker}">
     <div class="card-top">
-      <div class="ticker ${cls}">${ticker}</div>
-      <div class="price">$${fmt(t.price)}</div>
+      <div class="card-top-left">
+        <div class="ticker ${cls}">${ticker}</div>
+        <div class="price">$${fmt(t.price)}</div>
+        <span class="badge ${b.cls}">${b.text}</span>
+      </div>
+      <div class="tf-toggle" data-ticker="${ticker}">
+        <button class="tf-btn active" data-tf="day">DAY</button>
+        <button class="tf-btn" data-tf="week">WEEK</button>
+        <button class="tf-btn" data-tf="month">MONTH</button>
+      </div>
     </div>
-    <div class="date">截至 ${t.date} 收盘</div>
-    <div class="badge ${b.cls}">${b.text}</div>
-    ${renderLadder(t)}
+    <div class="date">As of ${t.date} close</div>
+    <div class="chart-wrap" id="chart-${ticker}">${buildChartSVG(t.chart.day, color)}</div>
+    ${buildLegend(color)}
+    <div class="stop-note">Stop level: $${fmt(t.stop_level)}</div>
     ${renderLog(t)}
   </div>`;
 }
 
-// Fetch data straight from GitHub's raw content, not a relative path.
-// This means data freshness depends only on the GitHub Actions commit,
-// not on whether Vercel (or any static host) has redeployed recently.
-const DATA_URL = 'https://cdn.jsdelivr.net/gh/ellishu2026/dual-core@main/data/signals.json';
+function wireToggles(data){
+  document.querySelectorAll('.tf-toggle').forEach(toggle=>{
+    const ticker = toggle.dataset.ticker;
+    toggle.querySelectorAll('.tf-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        toggle.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const tf = btn.dataset.tf;
+        const color = TICKER_COLOR[ticker] || '#333';
+        document.getElementById(`chart-${ticker}`).innerHTML = buildChartSVG(data.tickers[ticker].chart[tf], color);
+      });
+    });
+  });
+}
 
 fetch(DATA_URL + '?_=' + Date.now())
   .then(r=>{ if(!r.ok) throw new Error('signals.json not found'); return r.json(); })
   .then(data=>{
-    document.getElementById('meta').innerHTML =
-      `数据源 yfinance · 更新于 ${new Date(data.updated_at).toLocaleString('zh-CN')}<span class="ver">v${data.version}</span>`;
-    const grid = document.getElementById('grid');
-    grid.innerHTML = ['NVDA','LLY'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
+    document.getElementById('verPill').textContent = 'v' + data.version;
+    document.getElementById('meta').textContent =
+      `Source yfinance · Updated ${new Date(data.updated_at).toLocaleString('en-US')}`;
+    const stack = document.getElementById('stack');
+    stack.innerHTML = ['NVDA','LLY'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
+    wireToggles(data);
     document.getElementById('footer').textContent =
-      '仅供个人研究使用，不构成投资建议 · 美股收盘后约1小时自动刷新';
+      'For personal research only — not investment advice. Auto-refreshes ~1hr after US market close.';
   })
   .catch(err=>{
-    document.getElementById('grid').innerHTML =
-      `<div class="loading">数据加载失败：${err.message}<br>请确认 data/signals.json 已生成</div>`;
+    document.getElementById('stack').innerHTML =
+      `<div class="loading">Failed to load data: ${err.message}<br>Check that data/signals.json exists.</div>`;
   });
 </script>
 </body>
