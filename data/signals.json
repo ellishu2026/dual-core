@@ -1,0 +1,28 @@
+{
+  "version": "1.0.1",
+  "updated_at": "2026-07-09T00:00:00+00:00",
+  "tickers": {
+    "NVDA": {
+      "date": "placeholder — run fetch_data.py",
+      "price": 0.0,
+      "ema": {"5":0.0,"9":0.0,"20":0.0,"60":0.0,"120":0.0,"180":0.0,"195":0.0,"225":0.0},
+      "position_pct": 0,
+      "status": "等待首次运行",
+      "aligned": false,
+      "tp_half_done": false,
+      "stop_level": 0.0,
+      "last_events": []
+    },
+    "LLY": {
+      "date": "placeholder — run fetch_data.py",
+      "price": 0.0,
+      "ema": {"5":0.0,"9":0.0,"20":0.0,"60":0.0,"120":0.0,"180":0.0,"195":0.0,"225":0.0},
+      "position_pct": 0,
+      "status": "等待首次运行",
+      "aligned": false,
+      "tp_half_done": false,
+      "stop_level": 0.0,
+      "last_events": []
+    }
+  }
+}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>双核 · NVDA / LLY EMA 信号台</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  :root{
+    --paper:#FAFAF7;
+    --card:#FFFFFF;
+    --ink:#1B1D1F;
+    --muted:#767A80;
+    --line:#E7E5DF;
+    --nvda:#2F7D4F;
+    --nvda-soft:#E6F2EA;
+    --lly:#B4322B;
+    --lly-soft:#F7E9E7;
+    --watch:#B8862B;
+    --watch-soft:#FBF1DE;
+    --stop:#B4322B;
+    --stop-soft:#F7E9E7;
+    --hold:#2F7D4F;
+    --hold-soft:#E6F2EA;
+    --mono: "SF Mono","IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand img{width:38px;height:38px;display:block;}
+  .brand h1{font-size:20px;margin:0;letter-spacing:0.2px;font-weight:700;}
+  .brand .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .meta{font-size:12px;color:var(--muted);text-align:right;}
+  .meta .ver{display:inline-block;margin-left:8px;padding:2px 7px;border:1px solid var(--line);border-radius:20px;font-family:var(--mono);}
+
+  .rules{
+    margin:22px 0 26px;
+    padding:14px 16px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.9;
+  }
+  .rules b{color:var(--ink);font-weight:600;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:760px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 20px 22px;
+  }
+  .card.nvda{border-top:3px solid var(--nvda);}
+  .card.lly{border-top:3px solid var(--lly);}
+
+  .card-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px;}
+  .ticker{font-size:22px;font-weight:800;letter-spacing:0.3px;}
+  .ticker.nvda{color:var(--nvda);}
+  .ticker.lly{color:var(--lly);}
+  .price{font-family:var(--mono);font-size:22px;font-weight:600;}
+  .date{font-size:11.5px;color:var(--muted);margin-bottom:14px;}
+
+  .badge{
+    display:inline-block;
+    font-size:13px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:20px;
+    margin-bottom:16px;
+  }
+  .badge.watch{background:var(--watch-soft);color:var(--watch);}
+  .badge.hold{background:var(--hold-soft);color:var(--hold);}
+  .badge.flat{background:#F1F1EE;color:var(--muted);}
+  .badge.stop{background:var(--stop-soft);color:var(--stop);}
+
+  .ladder{position:relative;height:220px;margin:8px 4px 20px 54px;}
+  .rail{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line);border-radius:3px;}
+  .rail .fillzone{position:absolute;left:0;width:3px;border-radius:3px;}
+  .tick{position:absolute;left:-4px;width:11px;height:2px;}
+  .tick .lbl{
+    position:absolute;left:16px;top:-7px;
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+    white-space:nowrap;
+  }
+  .tick .val{color:var(--ink);font-weight:600;}
+  .price-marker{
+    position:absolute;left:-54px;width:0;
+    display:flex;align-items:center;gap:6px;
+  }
+  .price-marker .dot{width:10px;height:10px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--paper);}
+  .price-marker .tag{
+    font-family:var(--mono);font-weight:700;font-size:12px;
+    background:var(--ink);color:#fff;padding:2px 6px;border-radius:5px;
+  }
+  .stop-line{position:absolute;left:-14px;right:-200px;border-top:1.5px dashed var(--stop);opacity:0.55;}
+  .stop-line .stag{position:absolute;right:0;top:-16px;font-size:10px;color:var(--stop);font-family:var(--mono);}
+
+  .log{border-top:1px solid var(--line);padding-top:12px;}
+  .log h4{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin:0 0 8px;font-weight:600;}
+  .log ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+  .log li{display:flex;justify-content:space-between;font-size:12.5px;}
+  .log .a{color:var(--ink);font-weight:600;}
+  .log .d{color:var(--muted);font-family:var(--mono);}
+  .empty{color:var(--muted);font-size:12.5px;}
+
+  footer{margin-top:28px;font-size:11.5px;color:var(--muted);text-align:center;}
+  .loading{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <img src="logo.svg" alt="双核">
+      <div>
+        <h1>双核 Dual Core</h1>
+        <div class="sub">NVDA · LLY EMA 信号台</div>
+      </div>
+    </div>
+    <div class="meta" id="meta">加载中…</div>
+  </header>
+
+  <div class="rules">
+    <b>进场</b>：价 ≤ EMA180 观察 → 价 ≤ EMA195 开仓30% → 价 ≤ EMA225 加仓至75%　·　
+    <b>止损</b>：价 ≤ 0.9×EMA225 清仓　·　
+    <b>止盈</b>：多头排列(5&gt;9&gt;20&gt;60)后，价 &lt; EMA5 减半，价 &lt; EMA9 清仓
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="loading">正在读取信号数据…</div>
+  </div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const EMA_ORDER = [225,195,180,120,60,20,9,5]; // top(high) to bottom(low) on the rail, longest period first
+const TICKER_CLASS = {NVDA:"nvda", LLY:"lly"};
+
+function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function badgeInfo(t){
+  if(t.status.includes('止损')) return {cls:'stop', text:t.status};
+  if(t.position_pct>0) return {cls:'hold', text:t.status};
+  if(t.status==='观察') return {cls:'watch', text:t.status};
+  return {cls:'flat', text:t.status};
+}
+
+function renderLadder(t){
+  const vals = EMA_ORDER.map(p=>t.ema[String(p)]);
+  const allVals = vals.concat([t.price, t.stop_level]);
+  const max = Math.max(...allVals)*1.01;
+  const min = Math.min(...allVals)*0.99;
+  const span = max-min;
+  const yOf = v => 8 + (1 - (v-min)/span) * (220-16);
+
+  let html = '<div class="ladder"><div class="rail"></div>';
+  EMA_ORDER.forEach(p=>{
+    const v = t.ema[String(p)];
+    const y = yOf(v);
+    html += `<div class="tick" style="top:${y}px;background:var(--line)">
+      <span class="lbl">EMA${p} <span class="val">${fmt(v)}</span></span>
+    </div>`;
+  });
+  const stopY = yOf(t.stop_level);
+  html += `<div class="stop-line" style="top:${stopY}px"><span class="stag">止损线 ${fmt(t.stop_level)}</span></div>`;
+  const priceY = yOf(t.price);
+  html += `<div class="price-marker" style="top:${priceY-5}px"><span class="dot"></span><span class="tag">${fmt(t.price)}</span></div>`;
+  html += '</div>';
+  return html;
+}
+
+function renderLog(t){
+  if(!t.last_events || t.last_events.length===0){
+    return '<div class="log"><h4>近期操作</h4><div class="empty">暂无状态变化记录</div></div>';
+  }
+  const items = t.last_events.slice().reverse().map(e=>
+    `<li><span class="a">${e.action}（${e.position_pct}%）</span><span class="d">${e.date}</span></li>`
+  ).join('');
+  return `<div class="log"><h4>近期操作</h4><ul>${items}</ul></div>`;
+}
+
+function renderCard(ticker, t){
+  const cls = TICKER_CLASS[ticker] || '';
+  const b = badgeInfo(t);
+  return `
+  <div class="card ${cls}">
+    <div class="card-top">
+      <div class="ticker ${cls}">${ticker}</div>
+      <div class="price">$${fmt(t.price)}</div>
+    </div>
+    <div class="date">截至 ${t.date} 收盘</div>
+    <div class="badge ${b.cls}">${b.text}</div>
+    ${renderLadder(t)}
+    ${renderLog(t)}
+  </div>`;
+}
+
+// Fetch data straight from GitHub's raw content, not a relative path.
+// This means data freshness depends only on the GitHub Actions commit,
+// not on whether Vercel (or any static host) has redeployed recently.
+const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
+
+fetch(DATA_URL + '?_=' + Date.now())
+  .then(r=>{ if(!r.ok) throw new Error('signals.json not found'); return r.json(); })
+  .then(data=>{
+    document.getElementById('meta').innerHTML =
+      `数据源 yfinance · 更新于 ${new Date(data.updated_at).toLocaleString('zh-CN')}<span class="ver">v${data.version}</span>`;
+    const grid = document.getElementById('grid');
+    grid.innerHTML = ['NVDA','LLY'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
+    document.getElementById('footer').textContent =
+      '仅供个人研究使用，不构成投资建议 · 美股收盘后约1小时自动刷新';
+  })
+  .catch(err=>{
+    document.getElementById('grid').innerHTML =
+      `<div class="loading">数据加载失败：${err.message}<br>请确认 data/signals.json 已生成</div>`;
+  });
+</script>
+</body>
+</html>
