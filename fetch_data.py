@@ -31,8 +31,10 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.0.10"
-TICKERS = ["NVDA", "LLY"]
+VERSION = "1.0.11"
+TICKERS = ["NVDA", "LLY", "SOXL"]  # SOXL added as a watch-only third ticker —
+                                     # runs the same entry/stop/TP engine,
+                                     # just for reference/observation
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "5y"  # enough for EMA225 to stabilize and for a trailing-1y high check
 

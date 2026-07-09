@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dual Core · NVDA / LLY EMA Signals</title>
+<title>Dual Core · NVDA / LLY / SOXL EMA Signals</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <style>
   :root{
@@ -16,6 +16,8 @@
     --nvda-soft:#E6F2EA;
     --lly:#B4322B;
     --lly-soft:#F7E9E7;
+    --soxl:#3A5FA0;
+    --soxl-soft:#E8ECF6;
     --watch:#B8862B;
     --watch-soft:#FBF1DE;
     --stop:#B4322B;
@@ -80,6 +82,7 @@
   }
   .card.nvda{border-top:3px solid var(--nvda);}
   .card.lly{border-top:3px solid var(--lly);}
+  .card.soxl{border-top:3px solid var(--soxl);}
 
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
   .card-top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
@@ -89,6 +92,7 @@
   .ticker{font-size:22px;font-weight:800;letter-spacing:0.3px;}
   .ticker.nvda{color:var(--nvda);}
   .ticker.lly{color:var(--lly);}
+  .ticker.soxl{color:var(--soxl);}
   .price{font-family:var(--mono);font-size:20px;font-weight:600;}
   .date{font-size:11px;color:var(--muted);}
 
@@ -206,8 +210,8 @@ const EMA_STYLE = {
   195: {color:'#3D5A80', width:2},     // 30% entry threshold
   225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
 };
-const TICKER_CLASS = {NVDA:"nvda", LLY:"lly"};
-const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B"};
+const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", SOXL:"soxl"};
+const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", SOXL:"#3A5FA0"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
@@ -408,7 +412,7 @@ fetch(DATA_URL + '?_=' + Date.now())
     document.getElementById('meta').textContent =
       `Source yfinance · Updated ${new Date(data.updated_at).toLocaleString('en-US')}`;
     const stack = document.getElementById('stack');
-    stack.innerHTML = ['NVDA','LLY'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
+    stack.innerHTML = ['NVDA','LLY','SOXL'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
     wireToggles(data);
     document.getElementById('footer').textContent =
       'For personal research only — not investment advice. Auto-refreshes ~1hr after US market close.';
