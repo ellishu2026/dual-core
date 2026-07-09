@@ -83,6 +83,9 @@
 
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
   .card-top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .mini-stat{font-family:var(--mono);font-size:12px;font-weight:600;}
+  .mini-stat.stop{color:var(--stop);}
+  .mini-stat.tp{color:var(--watch);}
   .ticker{font-size:22px;font-weight:800;letter-spacing:0.3px;}
   .ticker.nvda{color:var(--nvda);}
   .ticker.lly{color:var(--lly);}
@@ -114,11 +117,18 @@
   .log-col{width:155px;flex-shrink:0;}
 
   .readout{
-    font-family:var(--mono);font-size:11px;color:var(--muted);
-    background:var(--pill-bg);border-radius:8px;padding:7px 10px;
-    margin-bottom:8px;white-space:nowrap;overflow-x:auto;
+    font-family:var(--mono);font-size:10px;color:var(--muted);
+    background:var(--pill-bg);border-radius:8px;padding:6px 9px;
+    margin-bottom:8px;
+    display:flex;align-items:center;gap:8px;
+    white-space:nowrap;overflow-x:auto;
   }
-  .readout b{color:var(--ink);}
+  .readout b{color:var(--ink);flex-shrink:0;}
+  .readout .ritem{flex-shrink:0;}
+
+  @media (max-width:900px){
+    .readout{font-size:9px;gap:6px;}
+  }
 
   .chart-wrap{margin:0 0 10px;}
   .chart-wrap svg{width:100%;height:auto;display:block;cursor:crosshair;}
@@ -130,8 +140,6 @@
   .legend .swatch{width:12px;height:2px;display:inline-block;border-radius:1px;}
   .legend .swatch.price{height:3px;}
 
-  .stop-note{font-size:11.5px;color:var(--stop);font-family:var(--mono);margin:6px 0 2px;}
-  .tp-note{font-size:11.5px;color:var(--watch);font-family:var(--mono);margin:0 0 14px;}
 
   .log-col .log{border-top:none;padding-top:0;}
   .log h4{font-size:9px;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);margin:0 0 6px;font-weight:700;}
@@ -172,7 +180,7 @@
   <div class="pills">
     <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA180</code> Watch → ≤<code>EMA195</code> Enter → ≤<code>EMA225</code> Add</span></div>
     <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
-    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
+    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-21d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
     <div class="pill params"><span class="tag">Parameters</span><span class="txt">Entry <code>30%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code></span></div>
   </div>
 
@@ -304,6 +312,8 @@ function renderCard(ticker, t){
         <div class="ticker ${cls}">${ticker}</div>
         <div class="price">$${fmt(t.price)}</div>
         <span class="badge ${b.cls}">${b.text}</span>
+        <span class="mini-stat stop">Stop: $${fmt(t.stop_level)}</span>
+        <span class="mini-stat tp">Take-profit: $${fmt(t.tp_level)}</span>
       </div>
       <div class="tf-toggle" data-ticker="${ticker}">
         <button class="tf-btn active" data-tf="day">DAY</button>
@@ -317,21 +327,21 @@ function renderCard(ticker, t){
         <div class="readout" id="readout-${ticker}">${buildReadoutHTML(t.chart.day, t.chart.day.dates.length-1)}</div>
         <div class="chart-wrap" id="chart-${ticker}">${buildChartSVG(t.chart.day, color, ticker)}</div>
         ${buildLegend(color)}
-        <div class="stop-note">Stop level: $${fmt(t.stop_level)}</div>
-        <div class="tp-note">Take-profit trigger: $${fmt(t.tp_level)} (1Y high ×1.09)</div>
       </div>
       <div class="log-col">${renderLog(t)}</div>
     </div>
   </div>`;
 }
 
+function fmtCompact(n){ return Number(n).toFixed(2); } // no thousands comma — saves width in the readout row
+
 function buildReadoutHTML(chart, idx){
   if(!chart.dates.length) return '';
-  const parts = [`<b>${fmtDate(chart.dates[idx])}</b>`, `Close $${fmt(chart.close[idx])}`];
+  const parts = [`<b class="ritem">${fmtDate(chart.dates[idx])}</b>`, `<span class="ritem">Close $${fmtCompact(chart.close[idx])}</span>`];
   [5,9,180,195,225].forEach(p=>{
-    parts.push(`EMA${p} <span style="color:${emaColor(p)}">$${fmt(chart.ema[String(p)][idx])}</span>`);
+    parts.push(`<span class="ritem">EMA${p} <span style="color:${emaColor(p)}">$${fmtCompact(chart.ema[String(p)][idx])}</span></span>`);
   });
-  return parts.join(' &nbsp;·&nbsp; ');
+  return parts.join('');
 }
 
 function wireChartHover(ticker){

@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.0.7"
+VERSION = "1.0.9"
 TICKERS = ["NVDA", "LLY"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "5y"  # enough for EMA225 to stabilize and for a trailing-1y high check
@@ -77,12 +77,18 @@ def build_chart_series(df: pd.DataFrame) -> dict:
 
 
 TP_HIGH_MULTIPLIER = 1.09  # take-profit's "high" trigger = trailing 1y high x 1.09
+TP_HIGH_EXCLUDE_DAYS = 21   # freeze the reference high as of 3 weeks ago —
+                             # excluding the most recent 3 weeks stops a
+                             # smooth rally from dragging its own reference
+                             # high up with it day by day (see README note)
 
 
 def compute_tp_trigger_flag(df: pd.DataFrame) -> pd.DataFrame:
-    """Flags days where the close breaks 9% above the trailing 1-year high
-    (prior ~252 trading days) — the take-profit's high-confirmation gate."""
-    df["prior_1y_max"] = df["Close"].rolling(window=252, min_periods=1).max().shift(1)
+    """Flags days where the close breaks 9% above the 1-year high AS IT
+    STOOD 21 TRADING DAYS AGO (not yesterday's high, which would just chase
+    a smooth rally and rarely be clearable in a single day)."""
+    trailing_1y_high = df["Close"].rolling(window=252, min_periods=1).max()
+    df["prior_1y_max"] = trailing_1y_high.shift(TP_HIGH_EXCLUDE_DAYS)
     df["tp_trigger_level"] = df["prior_1y_max"] * TP_HIGH_MULTIPLIER
     df["hit_tp_high"] = df["Close"] >= df["tp_trigger_level"]
     return df
