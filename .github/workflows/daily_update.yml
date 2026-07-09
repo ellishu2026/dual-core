@@ -34,7 +34,3 @@ jobs:
           git add data/signals.json
           git diff --staged --quiet || git commit -m "chore: refresh signals $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push
-
-      - name: Purge jsDelivr cache
-        run: |
-          curl -s "https://purge.jsdelivr.net/gh/ellishu2026/dual-core@main/data/signals.json" || true

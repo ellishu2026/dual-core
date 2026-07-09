@@ -196,7 +196,12 @@
 </div>
 
 <script>
-const DATA_URL = 'https://cdn.jsdelivr.net/gh/ellishu2026/dual-core@main/data/signals.json';
+// Fetch straight from GitHub's raw content, not jsDelivr. jsDelivr caches
+// @branch references separately from file content, and a successful purge
+// doesn't reliably clear that — it stayed stale for hours in testing.
+// raw.githubusercontent.com is close to real-time and fine for normal
+// (non-bursty) personal-dashboard traffic.
+const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 // key EMAs the strategy actually acts on get distinct colors + a thicker
 // stroke; 20/60/120 are context-only and stay thin, light gray
