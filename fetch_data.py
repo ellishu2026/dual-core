@@ -9,8 +9,8 @@ writes everything the dashboard needs to data/signals.json.
 
 Rules (as specified):
   Entry:
-    price <= EMA180                -> 观察 (watch only, no position)
-    price <= EMA195                -> 开仓 30%
+    price <= EMA180                -> 开仓 10%
+    price <= EMA195                -> 加仓至 35%
     price <= EMA225                -> 加仓至 75%
   Stop loss:
     price <= 0.9 * EMA225          -> 清仓 (full exit, resets everything)
@@ -31,12 +31,25 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.1.6"
+VERSION = "1.1.7"
 TICKERS = ["NVDA", "LLY", "SOXL"]  # SOXL added as a watch-only third ticker —
                                      # runs the same entry/stop/TP engine,
                                      # just for reference/observation
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
-LOOKBACK = "5y"  # enough for EMA225 to stabilize and for a trailing-1y high check
+LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
+                    # just enough for EMA225/1y-high math to have inputs
+WARMUP_DAYS = 600   # ~2.7y at ~225 trading days/year — comfortably more than
+                     # 3x the longest EMA span, the common rule-of-thumb for
+                     # an EMA to converge away from its seed value. Without
+                     # this, day 0 of any pulled window has ema[0]==price[0]
+                     # for every period (an artifact of the adjust=False
+                     # recursive formula, not a real signal), which can
+                     # spuriously trigger "Add to 75%" on day 1 and then
+                     # ride along as fake state for the rest of the replay
+                     # if no real stop-loss/take-profit cycle happens to
+                     # reset it first. Discarding the state-machine's
+                     # warm-up window (EMAs themselves still use full
+                     # history for accuracy) closes that gap.
 
 
 def compute_emas(df: pd.DataFrame) -> pd.DataFrame:
@@ -145,10 +158,13 @@ def run_state_machine(df: pd.DataFrame) -> dict:
                     position_pct = 75.0
                     log(date, "Add to 75%", position_pct)
             elif price <= e195:
-                if position_pct < 30:
-                    position_pct = 30.0
-                    log(date, "Enter 30%", position_pct)
-            # price <= e180 alone is watch-only, no position change, no log spam
+                if position_pct < 35:
+                    position_pct = 35.0
+                    log(date, "Add to 35%", position_pct)
+            elif price <= e180:
+                if position_pct < 10:
+                    position_pct = 10.0
+                    log(date, "Enter 10%", position_pct)
 
         # ---- 3) Take profit (only relevant once in a position) ----
         if position_pct > 0:
@@ -221,6 +237,12 @@ def fetch_one(ticker: str) -> dict:
     hist = hist.dropna(subset=[f"ema{p}" for p in EMA_PERIODS]).reset_index(drop=True)
     if hist.empty:
         raise RuntimeError(f"Not enough history for {ticker} to compute EMA225")
+    # drop the warm-up window (see WARMUP_DAYS comment above) before replaying
+    # the state machine — EMAs above were already computed on the FULL
+    # history, so this only affects which rows count as "state-eligible",
+    # not the accuracy of the EMA values themselves
+    if len(hist) > WARMUP_DAYS:
+        hist = hist.iloc[WARMUP_DAYS:].reset_index(drop=True)
     return run_state_machine(hist)
 
 
