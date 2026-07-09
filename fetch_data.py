@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.0.9"
+VERSION = "1.0.10"
 TICKERS = ["NVDA", "LLY"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "5y"  # enough for EMA225 to stabilize and for a trailing-1y high check
@@ -84,11 +84,18 @@ TP_HIGH_EXCLUDE_DAYS = 21   # freeze the reference high as of 3 weeks ago —
 
 
 def compute_tp_trigger_flag(df: pd.DataFrame) -> pd.DataFrame:
-    """Flags days where the close breaks 9% above the 1-year high AS IT
-    STOOD 21 TRADING DAYS AGO (not yesterday's high, which would just chase
-    a smooth rally and rarely be clearable in a single day)."""
-    trailing_1y_high = df["Close"].rolling(window=252, min_periods=1).max()
-    df["prior_1y_max"] = trailing_1y_high.shift(TP_HIGH_EXCLUDE_DAYS)
+    """Flags days where the close breaks 9% above the 1-year high computed
+    over the window from 252 trading days ago to 21 trading days ago —
+    i.e. the trailing 1-year high with the most recent 3 weeks excluded.
+
+    Implementation note: shift THEN take a (252-21)-day rolling max, not
+    the other way around. Shifting a 252-day rolling max by 21 days would
+    reach back 272 days total (252 + 21), pulling in extra older history
+    and overstating the reference high. Shifting first and then taking a
+    231-day (252-21) window on the shifted series gives exactly the
+    intended 252-trading-day span ending 21 days ago."""
+    window = 252 - TP_HIGH_EXCLUDE_DAYS
+    df["prior_1y_max"] = df["Close"].shift(TP_HIGH_EXCLUDE_DAYS).rolling(window=window, min_periods=1).max()
     df["tp_trigger_level"] = df["prior_1y_max"] * TP_HIGH_MULTIPLIER
     df["hit_tp_high"] = df["Close"] >= df["tp_trigger_level"]
     return df
