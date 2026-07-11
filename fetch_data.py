@@ -9,8 +9,9 @@ the dashboard needs to data/signals.json.
 
 Rules (standard values — see params.csv for per-ticker overrides):
   Entry:
-    price <= EMA180                -> 开仓 10%
-    price <= EMA195                -> 加仓至 35%
+    price <= EMA120                -> 开仓 5%
+    price <= EMA180                -> 加仓至 15%
+    price <= EMA195                -> 加仓至 45%
     price <= EMA225                -> 加仓至 75%
   Stop loss:
     price <= 0.9 * EMA225          -> 清仓 (full exit, resets everything)
@@ -41,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "AMBA"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -64,8 +65,9 @@ PRICE_MODE_PARAMS = {"entry_price_mode", "stop_price_mode", "tp_high_price_mode"
 INT_PARAMS = {"tp_exclude_days"}
 
 DEFAULT_PARAMS = {
-    "entry_ema180_pct": 10.0,
-    "entry_ema195_pct": 35.0,
+    "entry_ema120_pct": 5.0,
+    "entry_ema180_pct": 15.0,
+    "entry_ema195_pct": 45.0,
     "entry_ema225_pct": 75.0,
     "entry_price_mode": "close",
     "stop_multiplier": 0.9,
@@ -185,6 +187,7 @@ def run_state_machine(df: pd.DataFrame, params: dict) -> dict:
     stop_col = price_col(params["stop_price_mode"])
     exit_col = price_col(params["tp_exit_price_mode"])
     stop_mult = params["stop_multiplier"]
+    pct_120 = params["entry_ema120_pct"]
     pct_180 = params["entry_ema180_pct"]
     pct_195 = params["entry_ema195_pct"]
     pct_225 = params["entry_ema225_pct"]
@@ -209,6 +212,7 @@ def run_state_machine(df: pd.DataFrame, params: dict) -> dict:
         exit_price = row[exit_col]
         e5, e9, e20, e60 = row["ema5"], row["ema9"], row["ema20"], row["ema60"]
         e180, e195, e225 = row["ema180"], row["ema195"], row["ema225"]
+        e120 = row["ema120"]
 
         # re-arm once price recovers back above EMA225 (fully clears the
         # distress zone) so a fresh decline can trigger the ladder again
@@ -238,7 +242,11 @@ def run_state_machine(df: pd.DataFrame, params: dict) -> dict:
             elif entry_price <= e180:
                 if position_pct < pct_180:
                     position_pct = pct_180
-                    log(date, f"Enter {pct_180:.0f}%", position_pct)
+                    log(date, f"Add to {pct_180:.0f}%", position_pct)
+            elif entry_price <= e120:
+                if position_pct < pct_120:
+                    position_pct = pct_120
+                    log(date, f"Enter {pct_120:.0f}%", position_pct)
 
         # ---- 3) Take profit (only relevant once in a position) ----
         if position_pct > 0:
