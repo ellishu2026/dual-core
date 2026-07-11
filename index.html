@@ -56,8 +56,6 @@
   .ver{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:20px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);}
   .meta{font-size:11.5px;color:var(--muted);text-align:right;padding-top:4px;}
 
-  /* standalone Parameters toggle, shared across both sections */
-  .params-bar{margin-bottom:20px;}
   .pill{
     background:var(--card);
     border:1px solid var(--line);
@@ -65,7 +63,7 @@
     padding:8px 14px;
     font-size:12px;
     line-height:1.4;
-    display:inline-flex;
+    display:flex;
     align-items:center;
     gap:7px;
   }
@@ -87,7 +85,7 @@
 
   .params-panel{
     background:var(--card);border:1px solid var(--line);border-radius:12px;
-    padding:14px 16px;margin:10px 0 0;overflow-x:auto;
+    padding:14px 16px;margin:-6px 0 20px;overflow-x:auto;
   }
   .params-table{border-collapse:collapse;font-size:11px;font-family:var(--mono);white-space:nowrap;}
   .params-table th,.params-table td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line);}
@@ -109,7 +107,10 @@
   .section.retr .section-num{background:var(--jpm);}
 
   /* rule pills row (3 per section: Entry / Stop Loss / Take Profit) */
-  .pills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
+  .pills{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  @media (max-width:640px){
+    .pills{grid-template-columns:1fr;}
+  }
 
   /* ticker cards - full width, stacked */
   .stack{display:flex;flex-direction:column;gap:18px;}
@@ -225,19 +226,16 @@
     <div class="meta" id="meta">Loading…</div>
   </header>
 
-  <div class="params-bar">
-    <div class="pill params" id="paramsToggle" role="button" tabindex="0"><span class="tag">Parameters</span><span class="txt">Full table for both strategies <span class="chev">▸</span></span></div>
-    <div class="params-panel" id="paramsPanel" style="display:none">
-      <table class="params-table" id="paramsTable"><tbody></tbody></table>
-    </div>
-  </div>
-
   <div class="section ema">
     <div class="section-title"><span class="section-num">STRATEGY 1</span><h2>EMA Ladder</h2></div>
     <div class="pills">
       <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA120</code> Enter <code>5%</code> → ≤<code>EMA180</code> Add <code>15%</code> → ≤<code>EMA195</code> Add <code>45%</code> → ≤<code>EMA225</code> Add <code>75%</code></span></div>
       <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
       <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-<span id="tpExcludeDays">?</span>d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
+      <div class="pill params" id="paramsToggle-ema" role="button" tabindex="0"><span class="tag">Parameters</span><span class="txt">Entry <code>5%→15%→45%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code> <span class="chev">▸</span></span></div>
+    </div>
+    <div class="params-panel" id="paramsPanel-ema" style="display:none">
+      <table class="params-table" id="paramsTable-ema"><tbody></tbody></table>
     </div>
     <div class="stack" id="stack-ema">
       <div class="loading">Loading signal data…</div>
@@ -250,6 +248,10 @@
       <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>61.8%</code> of 30D High Enter <code>15%</code> → ≤<code>50%</code> Add <code>50%</code></span></div>
       <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>30%</code> of 30D High Exit</span></div>
       <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">≥<code>109%</code> of 30D High Reduce to <code>25%</code>, ≥<code>120%</code> Exit</span></div>
+      <div class="pill params" id="paramsToggle-retr" role="button" tabindex="0"><span class="tag">Parameters</span><span class="txt">Entry <code>15%→50%</code> · Stop <code>30%</code> · TP <code>109%/120%</code> <span class="chev">▸</span></span></div>
+    </div>
+    <div class="params-panel" id="paramsPanel-retr" style="display:none">
+      <table class="params-table" id="paramsTable-retr"><tbody></tbody></table>
     </div>
     <div class="stack" id="stack-retr">
       <div class="loading">Loading signal data…</div>
@@ -270,7 +272,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.3';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const TICKER_ORDER = ['NVDA','LLY','JPM','SOXL','AMBA'];
@@ -497,10 +499,14 @@ function renderSection(stackElId, sectionData, ns){
   wireToggles(stack, sectionData, ns);
 }
 
-function buildParamsTable(rows){
-  const tbody = document.querySelector('#paramsTable tbody');
+// which params.csv rows belong to which strategy section — retr_* and
+// strategy_mode go with Strategy 2, everything else with Strategy 1
+function isRetrParam(name){ return name.startsWith('retr_') || name === 'strategy_mode'; }
+
+function buildParamsTable(tableId, rows){
+  const tbody = document.querySelector(`#${tableId} tbody`);
   if (!rows.length){
-    tbody.innerHTML = '<tr><td colspan="8" class="blank">params.csv not found or empty — all tickers using built-in defaults</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="blank">No params for this strategy in params.csv</td></tr>';
     return;
   }
   let html = `<tr><th>Param</th><th>Meaning</th><th>Standard</th>${TICKER_ORDER.map(t=>`<th>${t}</th>`).join('')}</tr>`;
@@ -515,9 +521,9 @@ function buildParamsTable(rows){
   tbody.innerHTML = html;
 }
 
-function wireParamsToggle(){
-  const toggle = document.getElementById('paramsToggle');
-  const panel = document.getElementById('paramsPanel');
+function wireParamsToggle(toggleId, panelId){
+  const toggle = document.getElementById(toggleId);
+  const panel = document.getElementById(panelId);
   const activate = () => {
     const isOpen = panel.style.display !== 'none';
     panel.style.display = isOpen ? 'none' : 'block';
@@ -528,7 +534,8 @@ function wireParamsToggle(){
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
   });
 }
-wireParamsToggle();
+wireParamsToggle('paramsToggle-ema', 'paramsPanel-ema');
+wireParamsToggle('paramsToggle-retr', 'paramsPanel-retr');
 
 fetch(DATA_URL + '?_=' + Date.now())
   .then(r=>{ if(!r.ok) throw new Error('signals.json not found'); return r.json(); })
@@ -540,7 +547,9 @@ fetch(DATA_URL + '?_=' + Date.now())
     if (tpDaysRow) {
       document.getElementById('tpExcludeDays').textContent = tpDaysRow.standard || '?';
     }
-    buildParamsTable(data.params_table || []);
+    const allParams = data.params_table || [];
+    buildParamsTable('paramsTable-ema', allParams.filter(r => !isRetrParam(r.param)));
+    buildParamsTable('paramsTable-retr', allParams.filter(r => isRetrParam(r.param)));
 
     const emaData = {};
     const retrData = {};

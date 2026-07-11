@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.3.2"
+VERSION = "1.3.3"
 TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "AMBA"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
