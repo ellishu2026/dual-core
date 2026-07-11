@@ -224,7 +224,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.1.8';
+const APP_VERSION = '1.2.0';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
@@ -326,12 +326,12 @@ function buildLegend(priceColor){
 
 function renderLog(t){
   if(!t.last_events || t.last_events.length===0){
-    return '<div class="log"><h4>Recent Actions (Past 1Y)</h4><div class="empty">No state changes in the past year</div></div>';
+    return '<div class="log"><h4>Recent Actions (Past 2Y)</h4><div class="empty">No state changes in the past 2 years</div></div>';
   }
   const items = t.last_events.slice().reverse().map(e=>
     `<li><span class="a">${e.action} (${e.position_pct}%)</span><span class="d">${e.date}</span></li>`
   ).join('');
-  return `<div class="log"><h4>Recent Actions (Past 1Y)</h4><ul>${items}</ul></div>`;
+  return `<div class="log"><h4>Recent Actions (Past 2Y)</h4><ul>${items}</ul></div>`;
 }
 
 function renderCard(ticker, t){

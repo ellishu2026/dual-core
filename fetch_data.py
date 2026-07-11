@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.1.8"
+VERSION = "1.2.0"
 TICKERS = ["NVDA", "LLY", "SOXL", "JPM", "COST"]  # SOXL/JPM/COST are
                                      # watch-only additions — run the same
                                      # entry/stop/TP engine, just for
@@ -93,23 +93,29 @@ def build_chart_series(df: pd.DataFrame) -> dict:
 
 
 TP_HIGH_MULTIPLIER = 1.09  # take-profit's "high" trigger = trailing 1y high x 1.09
-TP_HIGH_EXCLUDE_DAYS = 21   # freeze the reference high as of 3 weeks ago —
-                             # excluding the most recent 3 weeks stops a
-                             # smooth rally from dragging its own reference
-                             # high up with it day by day (see README note)
+TP_HIGH_EXCLUDE_DAYS = 60   # freeze the reference high as of ~3 months ago —
+                             # was 21 (3 weeks), but real-data testing on
+                             # JPM showed even a big year-long steady climb
+                             # never once cleared +9% above a 21-day-lagged
+                             # reference (the reference climbed nearly in
+                             # step with the price itself). 60 days gives
+                             # the reference more time to go stale, so a
+                             # sustained grind has a real shot at clearing
+                             # it, not just a sharp gap/breakout.
 
 
 def compute_tp_trigger_flag(df: pd.DataFrame) -> pd.DataFrame:
     """Flags days where the close breaks 9% above the 1-year high computed
-    over the window from 252 trading days ago to 21 trading days ago —
-    i.e. the trailing 1-year high with the most recent 3 weeks excluded.
+    over the window from 252 trading days ago to TP_HIGH_EXCLUDE_DAYS
+    trading days ago — i.e. the trailing 1-year high with the most recent
+    ~3 months excluded.
 
-    Implementation note: shift THEN take a (252-21)-day rolling max, not
-    the other way around. Shifting a 252-day rolling max by 21 days would
-    reach back 272 days total (252 + 21), pulling in extra older history
-    and overstating the reference high. Shifting first and then taking a
-    231-day (252-21) window on the shifted series gives exactly the
-    intended 252-trading-day span ending 21 days ago."""
+    Implementation note: shift THEN take a (252-TP_HIGH_EXCLUDE_DAYS)-day
+    rolling max, not the other way around. Shifting a 252-day rolling max
+    by N days would reach back 252+N days total, pulling in extra older
+    history and overstating the reference high. Shifting first and then
+    taking a (252-N)-day window on the shifted series gives exactly the
+    intended 252-trading-day span ending N days ago."""
     window = 252 - TP_HIGH_EXCLUDE_DAYS
     df["prior_1y_max"] = df["Close"].shift(TP_HIGH_EXCLUDE_DAYS).rolling(window=window, min_periods=1).max()
     df["tp_trigger_level"] = df["prior_1y_max"] * TP_HIGH_MULTIPLIER
@@ -197,10 +203,14 @@ def run_state_machine(df: pd.DataFrame) -> dict:
     price = last["Close"]
     e180, e195, e225 = last["ema180"], last["ema195"], last["ema225"]
 
-    # keep every state-change event from the trailing 1 year, not just a
-    # fixed count — a quiet year shows few events, an active one shows more
-    one_year_ago = pd.to_datetime(last["date_str"]) - pd.Timedelta(days=365)
-    recent_events = [e for e in events if pd.to_datetime(e["date"]) >= one_year_ago]
+    # keep the trailing 2 years of event history. Unlimited was too much
+    # (some tickers have 8+ years of cycles); the original 1-year window
+    # was too little — it hid a real position's own entry dates when the
+    # position had been held quietly for >1 year with no further action
+    # (e.g. JPM: entered 2025-03, still holding, nothing else happened —
+    # a 1y window showed nothing at all). 2 years is the middle ground.
+    two_years_ago = pd.to_datetime(last["date_str"]) - pd.Timedelta(days=730)
+    recent_events = [e for e in events if pd.to_datetime(e["date"]) >= two_years_ago]
 
     # current display status — anything that isn't currently in a position
     # (i.e. no entry/stop/take-profit condition is active) just reads 观察
