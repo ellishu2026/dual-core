@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dual Core · NVDA / LLY / SOXL / JPM / COST EMA Signals</title>
+<title>Dual Core · NVDA / LLY / JPM / SOXL / AMBA EMA Signals</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.json">
@@ -26,8 +26,8 @@
     --soxl-soft:#E8ECF6;
     --jpm:#5B4B8A;
     --jpm-soft:#EDEAF4;
-    --cost:#C17817;
-    --cost-soft:#FBEEDC;
+    --amba:#1C8C7A;
+    --amba-soft:#E5F3F0;
     --watch:#B8862B;
     --watch-soft:#FBF1DE;
     --stop:#B4322B;
@@ -82,6 +82,22 @@
   .pill span.txt{color:var(--ink);}
   .pill code{font-family:var(--mono);font-size:11.5px;background:var(--pill-bg);padding:1px 5px;border-radius:4px;}
 
+  .pill.params{cursor:pointer;}
+  .pill.params .chev{display:inline-block;margin-left:2px;font-size:10px;color:var(--muted);transition:transform 0.15s;}
+  .pill.params.open .chev{transform:rotate(90deg);}
+
+  .params-panel{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin:-14px 0 24px;overflow-x:auto;
+  }
+  .params-table{border-collapse:collapse;font-size:11px;font-family:var(--mono);white-space:nowrap;}
+  .params-table th,.params-table td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line);}
+  .params-table th{color:var(--muted);font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:0.4px;}
+  .params-table td.meaning{font-family:var(--sans);color:var(--ink);white-space:normal;min-width:180px;}
+  .params-table td.standard{color:var(--ink);font-weight:700;}
+  .params-table td.override{color:var(--watch);font-weight:700;}
+  .params-table td.blank{color:var(--muted);}
+
   /* ticker cards - full width, stacked */
   .stack{display:flex;flex-direction:column;gap:18px;}
 
@@ -95,7 +111,7 @@
   .card.lly{border-top:3px solid var(--lly);}
   .card.soxl{border-top:3px solid var(--soxl);}
   .card.jpm{border-top:3px solid var(--jpm);}
-  .card.cost{border-top:3px solid var(--cost);}
+  .card.amba{border-top:3px solid var(--amba);}
 
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
   .card-top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
@@ -107,7 +123,7 @@
   .ticker.lly{color:var(--lly);}
   .ticker.soxl{color:var(--soxl);}
   .ticker.jpm{color:var(--jpm);}
-  .ticker.cost{color:var(--cost);}
+  .ticker.amba{color:var(--amba);}
   .price{font-family:var(--mono);font-size:20px;font-weight:600;}
   .date{font-size:11px;color:var(--muted);}
 
@@ -140,7 +156,7 @@
     background:var(--pill-bg);border-radius:8px;padding:6px 8px;
     margin-bottom:8px;
     display:flex;align-items:center;gap:4px;
-    white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;
+    white-space:nowrap;overflow-x:auto;touch-action:pan-x;
   }
   .readout b{color:var(--ink);flex-shrink:0;}
   .readout .ritem{flex-shrink:0;}
@@ -203,7 +219,11 @@
     <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA180</code> Enter <code>10%</code> → ≤<code>EMA195</code> Add <code>35%</code> → ≤<code>EMA225</code> Add <code>75%</code></span></div>
     <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
     <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-<span id="tpExcludeDays">?</span>d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
-    <div class="pill params"><span class="tag">Parameters</span><span class="txt">Entry <code>10%→35%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code></span></div>
+    <div class="pill params" id="paramsToggle" role="button" tabindex="0"><span class="tag">Parameters</span><span class="txt">Entry <code>10%→35%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code> <span class="chev">▸</span></span></div>
+  </div>
+
+  <div class="params-panel" id="paramsPanel" style="display:none">
+    <table class="params-table" id="paramsTable"><tbody></tbody></table>
   </div>
 
   <div class="stack" id="stack">
@@ -224,7 +244,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.3.0';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
@@ -240,8 +260,8 @@ const EMA_STYLE = {
   195: {color:'#3D5A80', width:2},     // 30% entry threshold
   225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
 };
-const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", SOXL:"soxl", JPM:"jpm", COST:"cost"};
-const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", SOXL:"#3A5FA0", JPM:"#5B4B8A", COST:"#C17817"};
+const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", JPM:"jpm", SOXL:"soxl", AMBA:"amba"};
+const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", JPM:"#5B4B8A", SOXL:"#3A5FA0", AMBA:"#1C8C7A"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
@@ -435,17 +455,53 @@ function wireToggles(data){
   });
 }
 
+function buildParamsTable(rows){
+  const tbody = document.querySelector('#paramsTable tbody');
+  if (!rows.length){
+    tbody.innerHTML = '<tr><td colspan="7" class="blank">params.csv not found or empty — all tickers using built-in defaults</td></tr>';
+    return;
+  }
+  const tickers = ['NVDA','LLY','JPM','SOXL','AMBA'];
+  let html = `<tr><th>Param</th><th>Meaning</th><th>Standard</th>${tickers.map(t=>`<th>${t}</th>`).join('')}</tr>`;
+  rows.forEach(r=>{
+    html += `<tr><td>${r.param}</td><td class="meaning">${r.meaning||''}</td><td class="standard">${r.standard||''}</td>`;
+    tickers.forEach(t=>{
+      const v = r[t];
+      html += v ? `<td class="override">${v}</td>` : `<td class="blank">—</td>`;
+    });
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function wireParamsToggle(){
+  const toggle = document.getElementById('paramsToggle');
+  const panel = document.getElementById('paramsPanel');
+  const activate = () => {
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    toggle.classList.toggle('open', !isOpen);
+  };
+  toggle.addEventListener('click', activate);
+  toggle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+  });
+}
+wireParamsToggle();
+
 fetch(DATA_URL + '?_=' + Date.now())
   .then(r=>{ if(!r.ok) throw new Error('signals.json not found'); return r.json(); })
   .then(data=>{
     document.getElementById('verPill').textContent = 'v' + APP_VERSION;
     document.getElementById('meta').textContent =
       `Source yfinance · Updated ${new Date(data.updated_at).toLocaleString('en-US')}`;
-    if (data.tp_exclude_days !== undefined) {
-      document.getElementById('tpExcludeDays').textContent = data.tp_exclude_days;
+    const tpDaysRow = (data.params_table || []).find(r => r.param === 'tp_exclude_days');
+    if (tpDaysRow) {
+      document.getElementById('tpExcludeDays').textContent = tpDaysRow.standard || '?';
     }
+    buildParamsTable(data.params_table || []);
     const stack = document.getElementById('stack');
-    stack.innerHTML = ['NVDA','LLY','SOXL','JPM','COST'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
+    stack.innerHTML = ['NVDA','LLY','JPM','SOXL','AMBA'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
     wireToggles(data);
     document.getElementById('footer').textContent =
       'For personal research only — not investment advice. Auto-refreshes ~1hr after US market close.';

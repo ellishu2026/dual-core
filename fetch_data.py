@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-双核 (Dual Core) — NVDA / LLY EMA state-machine engine
-========================================================
-Pulls daily OHLC data for NVDA and LLY from yfinance, computes the EMA
-ladder (5/9/20/60/120/180/195/225), replays the entry / stop-loss /
-take-profit rules day by day to find the CURRENT position state, and
-writes everything the dashboard needs to data/signals.json.
+双核 (Dual Core) — NVDA / LLY / JPM / SOXL / AMBA EMA state-machine engine
+============================================================================
+Pulls daily OHLC data from yfinance, computes the EMA ladder
+(5/9/20/60/120/180/195/225), replays the entry / stop-loss / take-profit
+rules day by day to find the CURRENT position state, and writes everything
+the dashboard needs to data/signals.json.
 
-Rules (as specified):
+Rules (standard values — see params.csv for per-ticker overrides):
   Entry:
     price <= EMA180                -> 开仓 10%
     price <= EMA195                -> 加仓至 35%
@@ -16,14 +16,24 @@ Rules (as specified):
     price <= 0.9 * EMA225          -> 清仓 (full exit, resets everything)
   Take profit (only once position > 0):
     1) wait for bullish alignment: EMA5 > EMA9 > EMA20 > EMA60
-    2) after alignment, price < EMA5  -> 减仓一半
-    3) after alignment, price < EMA9  -> 清仓 (full exit, resets everything)
+    2) wait for price >= (1y high, 30 trading days stale) * 1.09
+    3) once both are true, price < EMA5  -> 减仓一半
+    4) once both are true, price < EMA9  -> 清仓 (full exit, resets everything)
 
 Position size only ever *increases* via the entry ladder and only ever
 *decreases* via stop-loss or take-profit — never on a mere bounce back
 above an EMA.
+
+PER-TICKER PARAMETERS: every threshold above (entry position sizes, stop
+multiplier, TP multiplier/lag, and which price — close vs intraday
+low/high — each rule checks against) is read from params.csv. Each row is
+one parameter; the "standard" column is the default, and any ticker's own
+column overrides it for that ticker only. Leave a ticker's cell blank to
+just use the standard value. Bullish-stack alignment (EMA5>9>20>60) is
+always Close-based and not currently configurable.
 """
 
+import csv
 import json
 import sys
 from datetime import datetime, timezone
@@ -31,11 +41,8 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.2.1"
-TICKERS = ["NVDA", "LLY", "SOXL", "JPM", "COST"]  # SOXL/JPM/COST are
-                                     # watch-only additions — run the same
-                                     # entry/stop/TP engine, just for
-                                     # reference/observation, not core
+VERSION = "1.3.0"
+TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "AMBA"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
                     # just enough for EMA225/1y-high math to have inputs
@@ -51,6 +58,65 @@ WARMUP_DAYS = 600   # ~2.7y at ~225 trading days/year — comfortably more than
                      # reset it first. Discarding the state-machine's
                      # warm-up window (EMAs themselves still use full
                      # history for accuracy) closes that gap.
+
+PARAMS_FILE = "params.csv"
+PRICE_MODE_PARAMS = {"entry_price_mode", "stop_price_mode", "tp_high_price_mode", "tp_exit_price_mode"}
+INT_PARAMS = {"tp_exclude_days"}
+
+DEFAULT_PARAMS = {
+    "entry_ema180_pct": 10.0,
+    "entry_ema195_pct": 35.0,
+    "entry_ema225_pct": 75.0,
+    "entry_price_mode": "close",
+    "stop_multiplier": 0.9,
+    "stop_price_mode": "close",
+    "tp_multiplier": 1.09,
+    "tp_exclude_days": 30,
+    "tp_high_price_mode": "close",
+    "tp_exit_price_mode": "close",
+}
+
+
+def _cast_param(name: str, raw: str):
+    if name in PRICE_MODE_PARAMS:
+        return raw.strip().lower()
+    if name in INT_PARAMS:
+        return int(float(raw))
+    return float(raw)
+
+
+def _read_params_csv() -> list:
+    """Returns the raw CSV rows (list of dicts), or [] if the file is
+    missing/unreadable — callers fall back to DEFAULT_PARAMS in that case."""
+    try:
+        with open(PARAMS_FILE, newline="", encoding="utf-8") as f:
+            return list(csv.DictReader(f))
+    except FileNotFoundError:
+        return []
+
+
+def load_ticker_params(ticker: str, rows: list) -> dict:
+    """Effective parameters for one ticker: standard value, overridden by
+    that ticker's own column if it's non-blank."""
+    params = dict(DEFAULT_PARAMS)
+    for row in rows:
+        name = (row.get("param") or "").strip()
+        if name not in DEFAULT_PARAMS:
+            continue
+        ticker_val = (row.get(ticker) or "").strip()
+        standard_val = (row.get("standard") or "").strip()
+        raw = ticker_val if ticker_val else standard_val
+        if not raw:
+            continue
+        try:
+            params[name] = _cast_param(name, raw)
+        except ValueError:
+            pass  # bad cell value — keep the default rather than crash the run
+    return params
+
+
+def price_col(mode: str) -> str:
+    return {"close": "Close", "low": "Low", "high": "High"}.get(mode, "Close")
 
 
 def compute_emas(df: pd.DataFrame) -> pd.DataFrame:
@@ -92,44 +158,44 @@ def build_chart_series(df: pd.DataFrame) -> dict:
     return {"day": day, "week": week, "month": month}
 
 
-TP_HIGH_MULTIPLIER = 1.09  # take-profit's "high" trigger = trailing 1y high x 1.09
-TP_HIGH_EXCLUDE_DAYS = 30   # freeze the reference high as of ~6 weeks ago —
-                             # was 21 (too tight, never triggered on JPM's
-                             # steady year-long climb — reference tracked
-                             # the price too closely) then briefly 60
-                             # (validated on real JPM data, triggers work),
-                             # settled on 30 as a middle ground: more
-                             # forgiving than 21, more sensitive than 60.
+def compute_tp_trigger_flag(df: pd.DataFrame, params: dict) -> pd.DataFrame:
+    """Flags days where the take-profit "high" price (per tp_high_price_mode
+    — close or intraday high) breaks tp_multiplier above the 1-year high of
+    THAT SAME price series, computed over the window from 252 trading days
+    ago to tp_exclude_days trading days ago.
 
-
-def compute_tp_trigger_flag(df: pd.DataFrame) -> pd.DataFrame:
-    """Flags days where the close breaks 9% above the 1-year high computed
-    over the window from 252 trading days ago to TP_HIGH_EXCLUDE_DAYS
-    trading days ago — i.e. the trailing 1-year high with the most recent
-    ~3 months excluded.
-
-    Implementation note: shift THEN take a (252-TP_HIGH_EXCLUDE_DAYS)-day
-    rolling max, not the other way around. Shifting a 252-day rolling max
-    by N days would reach back 252+N days total, pulling in extra older
-    history and overstating the reference high. Shifting first and then
-    taking a (252-N)-day window on the shifted series gives exactly the
-    intended 252-trading-day span ending N days ago."""
-    window = 252 - TP_HIGH_EXCLUDE_DAYS
-    df["prior_1y_max"] = df["Close"].shift(TP_HIGH_EXCLUDE_DAYS).rolling(window=window, min_periods=1).max()
-    df["tp_trigger_level"] = df["prior_1y_max"] * TP_HIGH_MULTIPLIER
-    df["hit_tp_high"] = df["Close"] >= df["tp_trigger_level"]
+    Implementation note: shift THEN take a (252-N)-day rolling max, not the
+    other way around. Shifting a 252-day rolling max by N days would reach
+    back 252+N days total, pulling in extra older history and overstating
+    the reference high. Shifting first and then taking a (252-N)-day window
+    on the shifted series gives exactly the intended 252-trading-day span
+    ending N days ago."""
+    col = price_col(params["tp_high_price_mode"])
+    n = params["tp_exclude_days"]
+    window = 252 - n
+    df["prior_1y_max"] = df[col].shift(n).rolling(window=window, min_periods=1).max()
+    df["tp_trigger_level"] = df["prior_1y_max"] * params["tp_multiplier"]
+    df["hit_tp_high"] = df[col] >= df["tp_trigger_level"]
     return df
 
 
-def run_state_machine(df: pd.DataFrame) -> dict:
+def run_state_machine(df: pd.DataFrame, params: dict) -> dict:
     """Replay the rules day by day. Returns current state + event log."""
+    entry_col = price_col(params["entry_price_mode"])
+    stop_col = price_col(params["stop_price_mode"])
+    exit_col = price_col(params["tp_exit_price_mode"])
+    stop_mult = params["stop_multiplier"]
+    pct_180 = params["entry_ema180_pct"]
+    pct_195 = params["entry_ema195_pct"]
+    pct_225 = params["entry_ema225_pct"]
+
     position_pct = 0.0
     aligned = False          # bullish alignment (5>9>20>60) seen since entry
-    tp_high_hit = False       # price broke 1y-high*1.09 since entry
+    tp_high_hit = False       # price broke tp_multiplier*1y-high since entry
     tp_half_done = False     # already took the half-reduce
     armed = True              # entry ladder is "live"; disarmed right after a
                                # stop-loss so a falling knife can't re-trigger
-                               # a fresh 75% entry the very next day
+                               # a fresh max entry the very next day
     events = []               # list of {date, action, position_pct}
 
     def log(date, action, pct):
@@ -137,17 +203,20 @@ def run_state_machine(df: pd.DataFrame) -> dict:
 
     for _, row in df.iterrows():
         date = row["date_str"]
-        price = row["Close"]
+        close_price = row["Close"]
+        entry_price = row[entry_col]
+        stop_price = row[stop_col]
+        exit_price = row[exit_col]
         e5, e9, e20, e60 = row["ema5"], row["ema9"], row["ema20"], row["ema60"]
         e180, e195, e225 = row["ema180"], row["ema195"], row["ema225"]
 
         # re-arm once price recovers back above EMA225 (fully clears the
         # distress zone) so a fresh decline can trigger the ladder again
-        if not armed and price > e225:
+        if not armed and entry_price > e225:
             armed = True
 
         # ---- 1) Stop loss (highest priority) ----
-        if position_pct > 0 and price <= 0.9 * e225:
+        if position_pct > 0 and stop_price <= stop_mult * e225:
             position_pct = 0.0
             aligned = False
             tp_high_hit = False
@@ -158,18 +227,18 @@ def run_state_machine(df: pd.DataFrame) -> dict:
 
         # ---- 2) Entry / scale-in ladder ----
         if armed:
-            if price <= e225:
-                if position_pct < 75:
-                    position_pct = 75.0
-                    log(date, "Add to 75%", position_pct)
-            elif price <= e195:
-                if position_pct < 35:
-                    position_pct = 35.0
-                    log(date, "Add to 35%", position_pct)
-            elif price <= e180:
-                if position_pct < 10:
-                    position_pct = 10.0
-                    log(date, "Enter 10%", position_pct)
+            if entry_price <= e225:
+                if position_pct < pct_225:
+                    position_pct = pct_225
+                    log(date, f"Add to {pct_225:.0f}%", position_pct)
+            elif entry_price <= e195:
+                if position_pct < pct_195:
+                    position_pct = pct_195
+                    log(date, f"Add to {pct_195:.0f}%", position_pct)
+            elif entry_price <= e180:
+                if position_pct < pct_180:
+                    position_pct = pct_180
+                    log(date, f"Enter {pct_180:.0f}%", position_pct)
 
         # ---- 3) Take profit (only relevant once in a position) ----
         if position_pct > 0:
@@ -179,18 +248,18 @@ def run_state_machine(df: pd.DataFrame) -> dict:
 
             if not tp_high_hit and bool(row["hit_tp_high"]):
                 tp_high_hit = True
-                log(date, "TP High Trigger (+9%)", position_pct)
+                log(date, "TP High Trigger", position_pct)
 
             # take-profit ladder only arms once BOTH bullish alignment
-            # AND a fresh all-time high have occurred since entry
+            # AND the high-trigger have occurred since entry
             tp_ready = aligned and tp_high_hit
 
-            if tp_ready and not tp_half_done and price < e5:
+            if tp_ready and not tp_half_done and exit_price < e5:
                 position_pct = position_pct / 2.0
                 tp_half_done = True
                 log(date, "TP Half Exit", position_pct)
 
-            if tp_ready and tp_half_done and price < e9:
+            if tp_ready and tp_half_done and exit_price < e9:
                 position_pct = 0.0
                 aligned = False
                 tp_high_hit = False
@@ -199,14 +268,12 @@ def run_state_machine(df: pd.DataFrame) -> dict:
 
     last = df.iloc[-1]
     price = last["Close"]
-    e180, e195, e225 = last["ema180"], last["ema195"], last["ema225"]
+    e225 = last["ema225"]
 
     # keep the trailing 2 years of event history. Unlimited was too much
     # (some tickers have 8+ years of cycles); the original 1-year window
     # was too little — it hid a real position's own entry dates when the
-    # position had been held quietly for >1 year with no further action
-    # (e.g. JPM: entered 2025-03, still holding, nothing else happened —
-    # a 1y window showed nothing at all). 2 years is the middle ground.
+    # position had been held quietly for >1 year with no further action.
     two_years_ago = pd.to_datetime(last["date_str"]) - pd.Timedelta(days=730)
     recent_events = [e for e in events if pd.to_datetime(e["date"]) >= two_years_ago]
 
@@ -228,21 +295,24 @@ def run_state_machine(df: pd.DataFrame) -> dict:
         "aligned": aligned,
         "tp_high_hit": tp_high_hit,
         "tp_half_done": tp_half_done,
-        "stop_level": round(float(0.9 * e225), 2),
+        "stop_level": round(float(stop_mult * e225), 2),
         "tp_level": round(float(last["tp_trigger_level"]), 2),
-        "last_events": recent_events,  # all state changes within the trailing 1 year
+        "last_events": recent_events,  # trailing 2-year state-change history
         "chart": build_chart_series(df),
+        "params": params,  # effective (resolved) params used for this ticker
     }
 
 
-def fetch_one(ticker: str) -> dict:
+def fetch_one(ticker: str, params_rows: list) -> dict:
+    params = load_ticker_params(ticker, params_rows)
+
     hist = yf.Ticker(ticker).history(period=LOOKBACK, interval="1d", auto_adjust=False)
     if hist.empty:
         raise RuntimeError(f"yfinance returned no data for {ticker}")
     hist = hist.reset_index()
     hist["date_str"] = hist["Date"].dt.strftime("%Y-%m-%d")
     hist = compute_emas(hist)
-    hist = compute_tp_trigger_flag(hist)
+    hist = compute_tp_trigger_flag(hist, params)
     hist = hist.dropna(subset=[f"ema{p}" for p in EMA_PERIODS]).reset_index(drop=True)
     if hist.empty:
         raise RuntimeError(f"Not enough history for {ticker} to compute EMA225")
@@ -252,24 +322,40 @@ def fetch_one(ticker: str) -> dict:
     # not the accuracy of the EMA values themselves
     if len(hist) > WARMUP_DAYS:
         hist = hist.iloc[WARMUP_DAYS:].reset_index(drop=True)
-    return run_state_machine(hist)
+    return run_state_machine(hist, params)
+
+
+def build_params_table(params_rows: list) -> list:
+    """Raw params.csv content (param/meaning/standard/per-ticker), trimmed
+    to only the tickers currently tracked — for the frontend's collapsible
+    Parameters panel. Not resolved/defaulted; blanks stay blank so the UI
+    can show "using standard" for empty cells."""
+    table = []
+    for row in params_rows:
+        name = (row.get("param") or "").strip()
+        if name not in DEFAULT_PARAMS:
+            continue
+        table.append({
+            "param": name,
+            "meaning": (row.get("meaning") or "").strip(),
+            "standard": (row.get("standard") or "").strip(),
+            **{t: (row.get(t) or "").strip() for t in TICKERS},
+        })
+    return table
 
 
 def main():
+    params_rows = _read_params_csv()
+
     result = {
         "version": VERSION,
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "tp_exclude_days": TP_HIGH_EXCLUDE_DAYS,  # single source of truth for
-                                                    # the frontend's TP pill
-                                                    # text — avoids the pill
-                                                    # silently drifting out of
-                                                    # sync with the real value
-                                                    # (happened once already)
+        "params_table": build_params_table(params_rows),
         "tickers": {},
     }
     for t in TICKERS:
         try:
-            result["tickers"][t] = fetch_one(t)
+            result["tickers"][t] = fetch_one(t, params_rows)
             print(f"[ok] {t}: {result['tickers'][t]['status']} @ {result['tickers'][t]['price']}")
         except Exception as e:
             print(f"[error] {t}: {e}", file=sys.stderr)
