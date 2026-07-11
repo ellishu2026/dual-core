@@ -1,6 +1,6 @@
 {
   "version": "1.3.1",
-  "updated_at": "2026-07-11T13:52:12+00:00",
+  "updated_at": "2026-07-11T14:10:11+00:00",
   "params_table": [
     {
       "param": "entry_ema120_pct",
@@ -87,10 +87,10 @@
       "meaning": "止盈基准线滞后天数(交易日)",
       "standard": "30",
       "NVDA": "",
-      "LLY": "",
-      "JPM": "",
-      "SOXL": "",
-      "AMBA": ""
+      "LLY": "21",
+      "JPM": "45",
+      "SOXL": "21",
+      "AMBA": "21"
     },
     {
       "param": "tp_high_price_mode",
@@ -953,7 +953,7 @@
       "tp_high_hit": false,
       "tp_half_done": false,
       "stop_level": 885.52,
-      "tp_level": 1209.83,
+      "tp_level": 1252.57,
       "last_events": [
         {
           "date": "2024-07-30",
@@ -1734,7 +1734,7 @@
         "stop_multiplier": 0.9,
         "stop_price_mode": "close",
         "tp_multiplier": 1.09,
-        "tp_exclude_days": 30,
+        "tp_exclude_days": 21,
         "tp_high_price_mode": "close",
         "tp_exit_price_mode": "close"
       }
@@ -2469,7 +2469,7 @@
         "stop_multiplier": 0.9,
         "stop_price_mode": "close",
         "tp_multiplier": 1.09,
-        "tp_exclude_days": 30,
+        "tp_exclude_days": 45,
         "tp_high_price_mode": "close",
         "tp_exit_price_mode": "close"
       }
@@ -2493,7 +2493,7 @@
       "tp_high_hit": false,
       "tp_half_done": false,
       "stop_level": 95.23,
-      "tp_level": 246.11,
+      "tp_level": 305.79,
       "last_events": [
         {
           "date": "2024-07-24",
@@ -2616,17 +2616,17 @@
           "position_pct": 45.0
         },
         {
-          "date": "2025-12-08",
+          "date": "2026-01-06",
           "action": "TP High Trigger",
           "position_pct": 45.0
         },
         {
-          "date": "2025-12-12",
+          "date": "2026-01-08",
           "action": "TP Half Exit",
           "position_pct": 22.5
         },
         {
-          "date": "2025-12-12",
+          "date": "2026-01-30",
           "action": "TP Full Exit",
           "position_pct": 0.0
         },
@@ -3344,7 +3344,7 @@
         "stop_multiplier": 0.9,
         "stop_price_mode": "close",
         "tp_multiplier": 1.09,
-        "tp_exclude_days": 30,
+        "tp_exclude_days": 21,
         "tp_high_price_mode": "close",
         "tp_exit_price_mode": "close"
       }
@@ -4144,7 +4144,7 @@
         "stop_multiplier": 0.9,
         "stop_price_mode": "close",
         "tp_multiplier": 1.09,
-        "tp_exclude_days": 30,
+        "tp_exclude_days": 21,
         "tp_high_price_mode": "close",
         "tp_exit_price_mode": "close"
       }
