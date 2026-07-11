@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 TICKERS = ["NVDA", "LLY", "SOXL", "JPM", "COST"]  # SOXL/JPM/COST are
                                      # watch-only additions — run the same
                                      # entry/stop/TP engine, just for
@@ -93,15 +93,13 @@ def build_chart_series(df: pd.DataFrame) -> dict:
 
 
 TP_HIGH_MULTIPLIER = 1.09  # take-profit's "high" trigger = trailing 1y high x 1.09
-TP_HIGH_EXCLUDE_DAYS = 60   # freeze the reference high as of ~3 months ago —
-                             # was 21 (3 weeks), but real-data testing on
-                             # JPM showed even a big year-long steady climb
-                             # never once cleared +9% above a 21-day-lagged
-                             # reference (the reference climbed nearly in
-                             # step with the price itself). 60 days gives
-                             # the reference more time to go stale, so a
-                             # sustained grind has a real shot at clearing
-                             # it, not just a sharp gap/breakout.
+TP_HIGH_EXCLUDE_DAYS = 30   # freeze the reference high as of ~6 weeks ago —
+                             # was 21 (too tight, never triggered on JPM's
+                             # steady year-long climb — reference tracked
+                             # the price too closely) then briefly 60
+                             # (validated on real JPM data, triggers work),
+                             # settled on 30 as a middle ground: more
+                             # forgiving than 21, more sensitive than 60.
 
 
 def compute_tp_trigger_flag(df: pd.DataFrame) -> pd.DataFrame:
@@ -261,6 +259,12 @@ def main():
     result = {
         "version": VERSION,
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "tp_exclude_days": TP_HIGH_EXCLUDE_DAYS,  # single source of truth for
+                                                    # the frontend's TP pill
+                                                    # text — avoids the pill
+                                                    # silently drifting out of
+                                                    # sync with the real value
+                                                    # (happened once already)
         "tickers": {},
     }
     for t in TICKERS:

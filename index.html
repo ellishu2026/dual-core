@@ -202,7 +202,7 @@
   <div class="pills">
     <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA180</code> Enter <code>10%</code> → ≤<code>EMA195</code> Add <code>35%</code> → ≤<code>EMA225</code> Add <code>75%</code></span></div>
     <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
-    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-21d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
+    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-<span id="tpExcludeDays">?</span>d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
     <div class="pill params"><span class="tag">Parameters</span><span class="txt">Entry <code>10%→35%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code></span></div>
   </div>
 
@@ -224,7 +224,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
@@ -441,6 +441,9 @@ fetch(DATA_URL + '?_=' + Date.now())
     document.getElementById('verPill').textContent = 'v' + APP_VERSION;
     document.getElementById('meta').textContent =
       `Source yfinance · Updated ${new Date(data.updated_at).toLocaleString('en-US')}`;
+    if (data.tp_exclude_days !== undefined) {
+      document.getElementById('tpExcludeDays').textContent = data.tp_exclude_days;
+    }
     const stack = document.getElementById('stack');
     stack.innerHTML = ['NVDA','LLY','SOXL','JPM','COST'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
     wireToggles(data);
