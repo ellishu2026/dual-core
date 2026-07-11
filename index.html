@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dual Core · NVDA / LLY / JPM / SOXL / AMBA EMA Signals</title>
+<title>Dual Core · NVDA / LLY / JPM / SOXL / AMBA — Two Strategies</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.json">
@@ -56,8 +56,8 @@
   .ver{display:inline-block;padding:2px 8px;border:1px solid var(--line);border-radius:20px;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);}
   .meta{font-size:11.5px;color:var(--muted);text-align:right;padding-top:4px;}
 
-  /* rule pills */
-  .pills{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+  /* standalone Parameters toggle, shared across both sections */
+  .params-bar{margin-bottom:20px;}
   .pill{
     background:var(--card);
     border:1px solid var(--line);
@@ -65,10 +65,9 @@
     padding:8px 14px;
     font-size:12px;
     line-height:1.4;
-    display:flex;
+    display:inline-flex;
     align-items:center;
     gap:7px;
-    flex:0 1 auto;
   }
   .pill .tag{
     font-size:10px;font-weight:800;letter-spacing:0.5px;
@@ -88,7 +87,7 @@
 
   .params-panel{
     background:var(--card);border:1px solid var(--line);border-radius:12px;
-    padding:14px 16px;margin:-14px 0 24px;overflow-x:auto;
+    padding:14px 16px;margin:10px 0 0;overflow-x:auto;
   }
   .params-table{border-collapse:collapse;font-size:11px;font-family:var(--mono);white-space:nowrap;}
   .params-table th,.params-table td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line);}
@@ -97,6 +96,20 @@
   .params-table td.standard{color:var(--ink);font-weight:700;}
   .params-table td.override{color:var(--watch);font-weight:700;}
   .params-table td.blank{color:var(--muted);}
+
+  /* section headers separating the two independent strategies */
+  .section{margin-top:8px;}
+  .section + .section{margin-top:40px;}
+  .section-title{display:flex;align-items:center;gap:10px;margin:0 0 12px;}
+  .section-title h2{font-size:15px;margin:0;font-weight:800;letter-spacing:0.2px;}
+  .section-num{
+    font-family:var(--mono);font-size:10px;font-weight:800;color:#fff;
+    background:var(--ink);padding:3px 8px;border-radius:999px;flex-shrink:0;
+  }
+  .section.retr .section-num{background:var(--jpm);}
+
+  /* rule pills row (3 per section: Entry / Stop Loss / Take Profit) */
+  .pills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
 
   /* ticker cards - full width, stacked */
   .stack{display:flex;flex-direction:column;gap:18px;}
@@ -195,9 +208,6 @@
     .log-col{width:100%;}
     .log-col .log{border-top:1px solid var(--line);padding-top:12px;}
   }
-  @media (max-width:640px){
-    .pills{grid-template-columns:1fr;}
-  }
   @media (max-width:520px){
     .price{font-size:17px;}
     .ticker{font-size:19px;}
@@ -215,19 +225,35 @@
     <div class="meta" id="meta">Loading…</div>
   </header>
 
-  <div class="pills">
-    <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA120</code> Enter <code>5%</code> → ≤<code>EMA180</code> Add <code>15%</code> → ≤<code>EMA195</code> Add <code>45%</code> → ≤<code>EMA225</code> Add <code>75%</code></span></div>
-    <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
-    <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-<span id="tpExcludeDays">?</span>d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
-    <div class="pill params" id="paramsToggle" role="button" tabindex="0"><span class="tag">Parameters</span><span class="txt">Entry <code>5%→15%→45%→75%</code> · Stop <code>0.9×</code> · TP <code>50%→0%</code> <span class="chev">▸</span></span></div>
+  <div class="params-bar">
+    <div class="pill params" id="paramsToggle" role="button" tabindex="0"><span class="tag">Parameters</span><span class="txt">Full table for both strategies <span class="chev">▸</span></span></div>
+    <div class="params-panel" id="paramsPanel" style="display:none">
+      <table class="params-table" id="paramsTable"><tbody></tbody></table>
+    </div>
   </div>
 
-  <div class="params-panel" id="paramsPanel" style="display:none">
-    <table class="params-table" id="paramsTable"><tbody></tbody></table>
+  <div class="section ema">
+    <div class="section-title"><span class="section-num">STRATEGY 1</span><h2>EMA Ladder</h2></div>
+    <div class="pills">
+      <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>EMA120</code> Enter <code>5%</code> → ≤<code>EMA180</code> Add <code>15%</code> → ≤<code>EMA195</code> Add <code>45%</code> → ≤<code>EMA225</code> Add <code>75%</code></span></div>
+      <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>0.9×EMA225</code> Exit</span></div>
+      <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">Bullish stack + <code>1Y High(-<span id="tpExcludeDays">?</span>d)×1.09</code>, then &lt;<code>EMA5</code> Half, &lt;<code>EMA9</code> Exit</span></div>
+    </div>
+    <div class="stack" id="stack-ema">
+      <div class="loading">Loading signal data…</div>
+    </div>
   </div>
 
-  <div class="stack" id="stack">
-    <div class="loading">Loading signal data…</div>
+  <div class="section retr">
+    <div class="section-title"><span class="section-num">STRATEGY 2</span><h2>30-Day High Retracement</h2></div>
+    <div class="pills">
+      <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>61.8%</code> of 30D High Enter <code>15%</code> → ≤<code>50%</code> Add <code>50%</code></span></div>
+      <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>30%</code> of 30D High Exit</span></div>
+      <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">≥<code>109%</code> of 30D High Reduce to <code>25%</code>, ≥<code>120%</code> Exit</span></div>
+    </div>
+    <div class="stack" id="stack-retr">
+      <div class="loading">Loading signal data…</div>
+    </div>
   </div>
 
   <footer id="footer"></footer>
@@ -244,9 +270,10 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.4.0';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
+const TICKER_ORDER = ['NVDA','LLY','JPM','SOXL','AMBA'];
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 // key EMAs the strategy actually acts on get distinct colors + a thicker
 // stroke; 20/60/120 are context-only and stay thin, light gray
@@ -289,10 +316,13 @@ function computeScale(chart){
   return {n, max, min, span, xOf, yOf};
 }
 
-// module-level: which chart data + color is currently shown per ticker,
-// so the hover handler (wired once, called on every mousemove) knows what
-// to read without re-fetching or re-parsing the SVG
+// module-level: which chart data + color is currently shown per
+// "ticker-namespace" key (namespace = 'ema' or 'retr', since the same
+// ticker appears once per section and needs independent state), so the
+// hover handler (wired once, called on every mousemove) knows what to
+// read without re-fetching or re-parsing the SVG
 const chartState = {};
+const stateKey = (ticker, ns) => `${ticker}__${ns}`;
 
 function buildChartSVG(chart, priceColor, ticker){
   const n = chart.dates.length;
@@ -354,39 +384,6 @@ function renderLog(t){
   return `<div class="log"><h4>Recent Actions (Past 2Y)</h4><ul>${items}</ul></div>`;
 }
 
-function renderCard(ticker, t){
-  const cls = TICKER_CLASS[ticker] || '';
-  const color = TICKER_COLOR[ticker] || '#333';
-  const b = badgeInfo(t);
-  chartState[ticker] = {chart: t.chart.day, color};
-  return `
-  <div class="card ${cls}" data-ticker="${ticker}">
-    <div class="card-top">
-      <div class="card-top-left">
-        <div class="ticker ${cls}">${ticker}</div>
-        <div class="price">$${fmt(t.price)}</div>
-        <span class="badge ${b.cls}">${b.text}</span>
-        <span class="mini-stat stop">Stop: $${fmt(t.stop_level)}</span>
-        <span class="mini-stat tp">Take-profit: $${fmt(t.tp_level)}</span>
-      </div>
-      <div class="tf-toggle" data-ticker="${ticker}">
-        <button class="tf-btn active" data-tf="day">DAY</button>
-        <button class="tf-btn" data-tf="week">WEEK</button>
-        <button class="tf-btn" data-tf="month">MONTH</button>
-      </div>
-    </div>
-    <div class="date">As of ${t.date} close</div>
-    <div class="body-row">
-      <div class="chart-col">
-        <div class="readout" id="readout-${ticker}">${buildReadoutHTML(t.chart.day, t.chart.day.dates.length-1)}</div>
-        <div class="chart-wrap" id="chart-${ticker}">${buildChartSVG(t.chart.day, color, ticker)}</div>
-        ${buildLegend(color)}
-      </div>
-      <div class="log-col">${renderLog(t)}</div>
-    </div>
-  </div>`;
-}
-
 function fmtCompact(n){ return Number(n).toFixed(2); } // no thousands comma — saves width in the readout row
 
 function buildReadoutHTML(chart, idx){
@@ -398,17 +395,53 @@ function buildReadoutHTML(chart, idx){
   return parts.join('');
 }
 
-function wireChartHover(ticker){
-  const container = document.getElementById(`chart-${ticker}`);
+// ns = 'ema' or 'retr' — keeps element IDs unique between the two
+// sections since the same ticker renders once in each
+function renderCard(ticker, t, ns){
+  const cls = TICKER_CLASS[ticker] || '';
+  const color = TICKER_COLOR[ticker] || '#333';
+  const b = badgeInfo(t);
+  chartState[stateKey(ticker, ns)] = {chart: t.chart.day, color};
+  return `
+  <div class="card ${cls}" data-ticker="${ticker}" data-ns="${ns}">
+    <div class="card-top">
+      <div class="card-top-left">
+        <div class="ticker ${cls}">${ticker}</div>
+        <div class="price">$${fmt(t.price)}</div>
+        <span class="badge ${b.cls}">${b.text}</span>
+        <span class="mini-stat stop">Stop: $${fmt(t.stop_level)}</span>
+        <span class="mini-stat tp">Take-profit: $${fmt(t.tp_level)}</span>
+      </div>
+      <div class="tf-toggle" data-ticker="${ticker}" data-ns="${ns}">
+        <button class="tf-btn active" data-tf="day">DAY</button>
+        <button class="tf-btn" data-tf="week">WEEK</button>
+        <button class="tf-btn" data-tf="month">MONTH</button>
+      </div>
+    </div>
+    <div class="date">As of ${t.date} close</div>
+    <div class="body-row">
+      <div class="chart-col">
+        <div class="readout" id="readout-${ticker}-${ns}">${buildReadoutHTML(t.chart.day, t.chart.day.dates.length-1)}</div>
+        <div class="chart-wrap" id="chart-${ticker}-${ns}">${buildChartSVG(t.chart.day, color, ticker)}</div>
+        ${buildLegend(color)}
+      </div>
+      <div class="log-col">${renderLog(t)}</div>
+    </div>
+  </div>`;
+}
+
+function wireChartHover(ticker, ns){
+  const container = document.getElementById(`chart-${ticker}-${ns}`);
   const svg = container.querySelector('svg');
   const rect = svg.querySelector('.hover-rect');
   const guide = svg.querySelector('.hover-guide');
   const dot = svg.querySelector('.hover-dot');
-  const readout = document.getElementById(`readout-${ticker}`);
+  const readout = document.getElementById(`readout-${ticker}-${ns}`);
   if(!rect) return;
+  const key = stateKey(ticker, ns);
 
   const showIndex = (idx) => {
-    const {chart} = chartState[ticker];
+    const {chart} = chartState[key];
     const {xOf, yOf} = computeScale(chart);
     const x = xOf(idx);
     guide.setAttribute('x1', x); guide.setAttribute('x2', x); guide.setAttribute('opacity', 1);
@@ -416,13 +449,13 @@ function wireChartHover(ticker){
     readout.innerHTML = buildReadoutHTML(chart, idx);
   };
   const resetToLatest = () => {
-    const {chart} = chartState[ticker];
+    const {chart} = chartState[key];
     guide.setAttribute('opacity', 0); dot.setAttribute('opacity', 0);
     readout.innerHTML = buildReadoutHTML(chart, chart.dates.length-1);
   };
 
   rect.addEventListener('mousemove', (evt)=>{
-    const {chart} = chartState[ticker];
+    const {chart} = chartState[key];
     const n = chart.dates.length;
     if(n===0) return;
     const svgRect = svg.getBoundingClientRect();
@@ -435,37 +468,45 @@ function wireChartHover(ticker){
   rect.addEventListener('mouseleave', resetToLatest);
 }
 
-function wireToggles(data){
-  document.querySelectorAll('.tf-toggle').forEach(toggle=>{
+// container = the section's .stack element; sectionData = {NVDA:{...}, LLY:{...}, ...}
+// (already the .ema or .retracement sub-object per ticker); ns = 'ema'|'retr'
+function wireToggles(container, sectionData, ns){
+  container.querySelectorAll('.tf-toggle').forEach(toggle=>{
     const ticker = toggle.dataset.ticker;
-    wireChartHover(ticker); // initial DAY view
+    wireChartHover(ticker, ns); // initial DAY view
     toggle.querySelectorAll('.tf-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         toggle.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
         const tf = btn.dataset.tf;
         const color = TICKER_COLOR[ticker] || '#333';
-        const chart = data.tickers[ticker].chart[tf];
-        chartState[ticker] = {chart, color};
-        document.getElementById(`chart-${ticker}`).innerHTML = buildChartSVG(chart, color, ticker);
-        document.getElementById(`readout-${ticker}`).innerHTML = buildReadoutHTML(chart, chart.dates.length-1);
-        wireChartHover(ticker); // re-wire since innerHTML replaced the SVG
+        const chart = sectionData[ticker].chart[tf];
+        chartState[stateKey(ticker, ns)] = {chart, color};
+        document.getElementById(`chart-${ticker}-${ns}`).innerHTML = buildChartSVG(chart, color, ticker);
+        document.getElementById(`readout-${ticker}-${ns}`).innerHTML = buildReadoutHTML(chart, chart.dates.length-1);
+        wireChartHover(ticker, ns); // re-wire since innerHTML replaced the SVG
       });
     });
   });
 }
 
+// renders one whole section (all 5 tickers) into the given stack element
+function renderSection(stackElId, sectionData, ns){
+  const stack = document.getElementById(stackElId);
+  stack.innerHTML = TICKER_ORDER.map(tk => sectionData[tk] ? renderCard(tk, sectionData[tk], ns) : '').join('');
+  wireToggles(stack, sectionData, ns);
+}
+
 function buildParamsTable(rows){
   const tbody = document.querySelector('#paramsTable tbody');
   if (!rows.length){
-    tbody.innerHTML = '<tr><td colspan="7" class="blank">params.csv not found or empty — all tickers using built-in defaults</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="blank">params.csv not found or empty — all tickers using built-in defaults</td></tr>';
     return;
   }
-  const tickers = ['NVDA','LLY','JPM','SOXL','AMBA'];
-  let html = `<tr><th>Param</th><th>Meaning</th><th>Standard</th>${tickers.map(t=>`<th>${t}</th>`).join('')}</tr>`;
+  let html = `<tr><th>Param</th><th>Meaning</th><th>Standard</th>${TICKER_ORDER.map(t=>`<th>${t}</th>`).join('')}</tr>`;
   rows.forEach(r=>{
     html += `<tr><td>${r.param}</td><td class="meaning">${r.meaning||''}</td><td class="standard">${r.standard||''}</td>`;
-    tickers.forEach(t=>{
+    TICKER_ORDER.forEach(t=>{
       const v = r[t];
       html += v ? `<td class="override">${v}</td>` : `<td class="blank">—</td>`;
     });
@@ -500,15 +541,25 @@ fetch(DATA_URL + '?_=' + Date.now())
       document.getElementById('tpExcludeDays').textContent = tpDaysRow.standard || '?';
     }
     buildParamsTable(data.params_table || []);
-    const stack = document.getElementById('stack');
-    stack.innerHTML = ['NVDA','LLY','JPM','SOXL','AMBA'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
-    wireToggles(data);
+
+    const emaData = {};
+    const retrData = {};
+    TICKER_ORDER.forEach(tk=>{
+      if(data.tickers[tk]){
+        emaData[tk] = data.tickers[tk].ema;
+        retrData[tk] = data.tickers[tk].retracement;
+      }
+    });
+    renderSection('stack-ema', emaData, 'ema');
+    renderSection('stack-retr', retrData, 'retr');
+
     document.getElementById('footer').textContent =
       'For personal research only — not investment advice. Auto-refreshes ~1hr after US market close.';
   })
   .catch(err=>{
-    document.getElementById('stack').innerHTML =
-      `<div class="loading">Failed to load data: ${err.message}<br>Check that data/signals.json exists.</div>`;
+    const msg = `<div class="loading">Failed to load data: ${err.message}<br>Check that data/signals.json exists.</div>`;
+    document.getElementById('stack-ema').innerHTML = msg;
+    document.getElementById('stack-retr').innerHTML = '';
   });
 </script>
 </body>

@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.3.1"
+VERSION = "1.4.0"
 TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "AMBA"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -62,7 +62,8 @@ WARMUP_DAYS = 600   # ~2.7y at ~225 trading days/year — comfortably more than
 
 PARAMS_FILE = "params.csv"
 PRICE_MODE_PARAMS = {"entry_price_mode", "stop_price_mode", "tp_high_price_mode", "tp_exit_price_mode"}
-INT_PARAMS = {"tp_exclude_days"}
+STRING_PARAMS = {"strategy_mode"}  # plain string params, not price modes
+INT_PARAMS = {"tp_exclude_days", "retr_days", "retr_exclude_days"}
 
 DEFAULT_PARAMS = {
     "entry_ema120_pct": 5.0,
@@ -76,11 +77,29 @@ DEFAULT_PARAMS = {
     "tp_exclude_days": 30,
     "tp_high_price_mode": "close",
     "tp_exit_price_mode": "close",
+    # --- alternate strategy: 30-day intraday-high retracement (opt-in) ---
+    "strategy_mode": "ema",  # "ema" (default, everything above) or
+                              # "retracement" (everything below instead —
+                              # completely separate rule set, not combined)
+    "retr_days": 30,
+    "retr_exclude_days": 5,   # like tp_exclude_days but for this window —
+                               # excludes the most recent N days from the
+                               # reference so it can't be dragged up by the
+                               # breakout day itself (see chat history: same
+                               # self-referencing trap the EMA TP system had)
+    "retr_enter_ratio": 0.618,
+    "retr_enter_pct": 15.0,
+    "retr_add_ratio": 0.50,
+    "retr_add_pct": 50.0,
+    "retr_tp_half_ratio": 1.09,
+    "retr_tp_half_pct": 25.0,
+    "retr_tp_full_ratio": 1.20,
+    "retr_stop_ratio": 0.30,
 }
 
 
 def _cast_param(name: str, raw: str):
-    if name in PRICE_MODE_PARAMS:
+    if name in PRICE_MODE_PARAMS or name in STRING_PARAMS:
         return raw.strip().lower()
     if name in INT_PARAMS:
         return int(float(raw))
@@ -311,6 +330,126 @@ def run_state_machine(df: pd.DataFrame, params: dict) -> dict:
     }
 
 
+def compute_retracement_ref(df: pd.DataFrame, params: dict) -> pd.DataFrame:
+    """Rolling N-day intraday-high reference for the retracement strategy,
+    with the most recent retr_exclude_days trading days excluded — same
+    shift-then-window pattern as the EMA system's TP trigger (see README):
+    shift by retr_exclude_days FIRST, then take a (retr_days -
+    retr_exclude_days)-day rolling max. Doing it the other way around
+    (window then shift) would reach back retr_days+retr_exclude_days days
+    total and overstate the reference, exactly the bug we found and fixed
+    once already for tp_exclude_days.
+
+    Without any exclusion at all (retr_exclude_days=0), the reference
+    chases a fast multi-day breakout day by day — verified on a synthetic
+    test where a 109% partial-TP day's own new high got pulled into the
+    very next day's reference, making the 120% full-TP threshold jump out
+    of reach even though price cleared the ORIGINAL 120% level."""
+    days = params["retr_days"]
+    exclude = params["retr_exclude_days"]
+    window = max(days - exclude, 1)
+    df["retr_ref_high"] = df["High"].shift(exclude).rolling(window=window, min_periods=1).max()
+    return df
+
+
+def run_retracement_state_machine(df: pd.DataFrame, params: dict) -> dict:
+    """Alternate, self-contained strategy: entries/exits are pure intraday
+    price ratios against the trailing N-day intraday high — no EMAs, no
+    bullish-stack gate, no separate high-trigger gate. Opt in per ticker
+    via strategy_mode=retracement in params.csv; a ticker on this mode
+    does NOT also run the EMA ladder — it's one or the other, not both."""
+    enter_ratio = params["retr_enter_ratio"]
+    enter_pct = params["retr_enter_pct"]
+    add_ratio = params["retr_add_ratio"]
+    add_pct = params["retr_add_pct"]
+    tp_half_ratio = params["retr_tp_half_ratio"]
+    tp_half_pct = params["retr_tp_half_pct"]
+    tp_full_ratio = params["retr_tp_full_ratio"]
+    stop_ratio = params["retr_stop_ratio"]
+
+    position_pct = 0.0
+    tp_half_done = False
+    armed = True              # disarmed after a stop-loss; re-arms once
+                               # Close recovers back above add_ratio*ref
+                               # (mirrors the EMA system's "clear the
+                               # deepest tier" re-arm logic)
+    events = []
+
+    def log(date, action, pct):
+        events.append({"date": date, "action": action, "position_pct": pct})
+
+    for _, row in df.iterrows():
+        date = row["date_str"]
+        low = row["Low"]
+        high = row["High"]
+        close = row["Close"]
+        ref = row["retr_ref_high"]
+        if pd.isna(ref):
+            continue
+
+        if not armed and close > add_ratio * ref:
+            armed = True
+
+        # ---- 1) Stop loss (highest priority) ----
+        if position_pct > 0 and low <= stop_ratio * ref:
+            position_pct = 0.0
+            tp_half_done = False
+            armed = False
+            log(date, "Stop-Loss Exit", position_pct)
+            continue
+
+        # ---- 2) Entry / scale-in ladder ----
+        if armed:
+            if low <= add_ratio * ref:
+                if position_pct < add_pct:
+                    position_pct = add_pct
+                    log(date, f"Add to {add_pct:.0f}%", position_pct)
+            elif low <= enter_ratio * ref:
+                if position_pct < enter_pct:
+                    position_pct = enter_pct
+                    log(date, f"Enter {enter_pct:.0f}%", position_pct)
+
+        # ---- 3) Take profit — pure price ratio, no other gate ----
+        if position_pct > 0:
+            if not tp_half_done and high >= tp_half_ratio * ref:
+                position_pct = tp_half_pct
+                tp_half_done = True
+                log(date, f"TP Reduce to {tp_half_pct:.0f}%", position_pct)
+            if high >= tp_full_ratio * ref:
+                position_pct = 0.0
+                tp_half_done = False
+                log(date, "TP Full Exit", position_pct)
+
+    last = df.iloc[-1]
+    ref = last["retr_ref_high"]
+
+    two_years_ago = pd.to_datetime(last["date_str"]) - pd.Timedelta(days=730)
+    recent_events = [e for e in events if pd.to_datetime(e["date"]) >= two_years_ago]
+
+    if position_pct == 0:
+        status = "Watching"
+    elif tp_half_done:
+        status = f"Holding {position_pct:.0f}% (TP Reduced)"
+    else:
+        status = f"Holding {position_pct:.0f}%"
+
+    return {
+        "date": last["date_str"],
+        "price": round(float(last["Close"]), 2),
+        "ema": {str(p): round(float(last[f"ema{p}"]), 2) for p in EMA_PERIODS},
+        "position_pct": position_pct,
+        "status": status,
+        "aligned": False,       # not applicable in retracement mode
+        "tp_high_hit": False,   # not applicable in retracement mode
+        "tp_half_done": tp_half_done,
+        "stop_level": round(float(stop_ratio * ref), 2),
+        "tp_level": round(float(tp_half_ratio * ref), 2),
+        "last_events": recent_events,
+        "chart": build_chart_series(df),
+        "params": params,
+    }
+
+
 def fetch_one(ticker: str, params_rows: list) -> dict:
     params = load_ticker_params(ticker, params_rows)
 
@@ -321,6 +460,7 @@ def fetch_one(ticker: str, params_rows: list) -> dict:
     hist["date_str"] = hist["Date"].dt.strftime("%Y-%m-%d")
     hist = compute_emas(hist)
     hist = compute_tp_trigger_flag(hist, params)
+    hist = compute_retracement_ref(hist, params)
     hist = hist.dropna(subset=[f"ema{p}" for p in EMA_PERIODS]).reset_index(drop=True)
     if hist.empty:
         raise RuntimeError(f"Not enough history for {ticker} to compute EMA225")
@@ -330,7 +470,15 @@ def fetch_one(ticker: str, params_rows: list) -> dict:
     # not the accuracy of the EMA values themselves
     if len(hist) > WARMUP_DAYS:
         hist = hist.iloc[WARMUP_DAYS:].reset_index(drop=True)
-    return run_state_machine(hist, params)
+    # both strategies run for every ticker now — not either/or. The page
+    # shows two independent sections (EMA ladder, then 30-day-high
+    # retracement), each with all 5 tickers, so both results are needed
+    # regardless of what strategy_mode says (that field is now unused for
+    # this purpose, kept in params.csv only in case it's wanted later).
+    return {
+        "ema": run_state_machine(hist, params),
+        "retracement": run_retracement_state_machine(hist, params),
+    }
 
 
 def build_params_table(params_rows: list) -> list:
@@ -364,9 +512,10 @@ def main():
     for t in TICKERS:
         try:
             result["tickers"][t] = fetch_one(t, params_rows)
-            print(f"[ok] {t}: {result['tickers'][t]['status']} @ {result['tickers'][t]['price']}")
-        except Exception as e:
-            print(f"[error] {t}: {e}", file=sys.stderr)
+            e, r = result["tickers"][t]["ema"], result["tickers"][t]["retracement"]
+            print(f"[ok] {t}: EMA={e['status']}@{e['price']} | Retr={r['status']}@{r['price']}")
+        except Exception as exc:
+            print(f"[error] {t}: {exc}", file=sys.stderr)
             sys.exit(1)
 
     with open("data/signals.json", "w", encoding="utf-8") as f:
