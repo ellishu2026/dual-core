@@ -1,6 +1,7 @@
 {
-  "version": "1.2.0",
-  "updated_at": "2026-07-11T09:51:34+00:00",
+  "version": "1.2.1",
+  "updated_at": "2026-07-11T10:04:10+00:00",
+  "tp_exclude_days": 30,
   "tickers": {
     "NVDA": {
       "date": "2026-07-10",
@@ -21,7 +22,7 @@
       "tp_high_hit": false,
       "tp_half_done": false,
       "stop_level": 168.28,
-      "tp_level": 225.67,
+      "tp_level": 256.96,
       "last_events": [
         {
           "date": "2025-01-27",
@@ -1575,7 +1576,7 @@
       "tp_high_hit": false,
       "tp_half_done": false,
       "stop_level": 95.23,
-      "tp_level": 92.99,
+      "tp_level": 246.11,
       "last_events": [
         {
           "date": "2024-07-25",
@@ -1683,13 +1684,13 @@
           "position_pct": 35.0
         },
         {
-          "date": "2025-11-26",
-          "action": "TP High Trigger (+9%)",
+          "date": "2025-12-03",
+          "action": "Bullish Stack Confirmed",
           "position_pct": 35.0
         },
         {
-          "date": "2025-12-03",
-          "action": "Bullish Stack Confirmed",
+          "date": "2025-12-08",
+          "action": "TP High Trigger (+9%)",
           "position_pct": 35.0
         },
         {
@@ -1708,13 +1709,13 @@
           "position_pct": 75.0
         },
         {
-          "date": "2026-04-08",
-          "action": "TP High Trigger (+9%)",
+          "date": "2026-04-09",
+          "action": "Bullish Stack Confirmed",
           "position_pct": 75.0
         },
         {
-          "date": "2026-04-09",
-          "action": "Bullish Stack Confirmed",
+          "date": "2026-04-13",
+          "action": "TP High Trigger (+9%)",
           "position_pct": 75.0
         },
         {
@@ -2443,41 +2444,6 @@
           "date": "2025-05-08",
           "action": "Bullish Stack Confirmed",
           "position_pct": 75.0
-        },
-        {
-          "date": "2025-09-11",
-          "action": "TP High Trigger (+9%)",
-          "position_pct": 75.0
-        },
-        {
-          "date": "2025-10-01",
-          "action": "TP Half Exit",
-          "position_pct": 37.5
-        },
-        {
-          "date": "2025-10-01",
-          "action": "TP Full Exit",
-          "position_pct": 0.0
-        },
-        {
-          "date": "2026-02-23",
-          "action": "Enter 10%",
-          "position_pct": 10.0
-        },
-        {
-          "date": "2026-03-05",
-          "action": "Add to 35%",
-          "position_pct": 35.0
-        },
-        {
-          "date": "2026-03-06",
-          "action": "Add to 75%",
-          "position_pct": 75.0
-        },
-        {
-          "date": "2026-04-16",
-          "action": "Bullish Stack Confirmed",
-          "position_pct": 75.0
         }
       ],
       "chart": {
@@ -3174,7 +3140,7 @@
       "tp_high_hit": false,
       "tp_half_done": false,
       "stop_level": 869.15,
-      "tp_level": 1124.91,
+      "tp_level": 1192.81,
       "last_events": [
         {
           "date": "2025-03-13",
