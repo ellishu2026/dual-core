@@ -7,6 +7,6 @@ entry_price_mode,进场判断用价 (close=收盘价 / low=盘中最低价),clos
 stop_multiplier,止损倍数 (价格<=倍数*EMA225),0.9,,,,,
 stop_price_mode,止损判断用价 (close=收盘价 / low=盘中最低价),close,,,,,
 tp_multiplier,止盈触发倍数 (近1年高*倍数),1.09,,,,,
-tp_exclude_days,止盈基准线滞后天数(交易日),30,,,,,
+tp_exclude_days,止盈基准线滞后天数(交易日),30,,21,45,21,21
 tp_high_price_mode,止盈创新高判断用价 (close=收盘价 / high=盘中最高价),close,,,,,
 tp_exit_price_mode,止盈减仓/清仓判断用价 (close=收盘价 / low=盘中最低价),close,,,,,
