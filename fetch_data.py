@@ -31,10 +31,11 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.1.7"
-TICKERS = ["NVDA", "LLY", "SOXL"]  # SOXL added as a watch-only third ticker —
-                                     # runs the same entry/stop/TP engine,
-                                     # just for reference/observation
+VERSION = "1.1.8"
+TICKERS = ["NVDA", "LLY", "SOXL", "JPM", "COST"]  # SOXL/JPM/COST are
+                                     # watch-only additions — run the same
+                                     # entry/stop/TP engine, just for
+                                     # reference/observation, not core
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
                     # just enough for EMA225/1y-high math to have inputs

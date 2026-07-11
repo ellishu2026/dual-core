@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dual Core · NVDA / LLY / SOXL EMA Signals</title>
+<title>Dual Core · NVDA / LLY / SOXL / JPM / COST EMA Signals</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.json">
@@ -24,6 +24,10 @@
     --lly-soft:#F7E9E7;
     --soxl:#3A5FA0;
     --soxl-soft:#E8ECF6;
+    --jpm:#5B4B8A;
+    --jpm-soft:#EDEAF4;
+    --cost:#C17817;
+    --cost-soft:#FBEEDC;
     --watch:#B8862B;
     --watch-soft:#FBF1DE;
     --stop:#B4322B;
@@ -90,6 +94,8 @@
   .card.nvda{border-top:3px solid var(--nvda);}
   .card.lly{border-top:3px solid var(--lly);}
   .card.soxl{border-top:3px solid var(--soxl);}
+  .card.jpm{border-top:3px solid var(--jpm);}
+  .card.cost{border-top:3px solid var(--cost);}
 
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
   .card-top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
@@ -100,6 +106,8 @@
   .ticker.nvda{color:var(--nvda);}
   .ticker.lly{color:var(--lly);}
   .ticker.soxl{color:var(--soxl);}
+  .ticker.jpm{color:var(--jpm);}
+  .ticker.cost{color:var(--cost);}
   .price{font-family:var(--mono);font-size:20px;font-weight:600;}
   .date{font-size:11px;color:var(--muted);}
 
@@ -216,7 +224,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.1.7';
+const APP_VERSION = '1.1.8';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
@@ -232,8 +240,8 @@ const EMA_STYLE = {
   195: {color:'#3D5A80', width:2},     // 30% entry threshold
   225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
 };
-const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", SOXL:"soxl"};
-const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", SOXL:"#3A5FA0"};
+const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", SOXL:"soxl", JPM:"jpm", COST:"cost"};
+const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", SOXL:"#3A5FA0", JPM:"#5B4B8A", COST:"#C17817"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
@@ -434,7 +442,7 @@ fetch(DATA_URL + '?_=' + Date.now())
     document.getElementById('meta').textContent =
       `Source yfinance · Updated ${new Date(data.updated_at).toLocaleString('en-US')}`;
     const stack = document.getElementById('stack');
-    stack.innerHTML = ['NVDA','LLY','SOXL'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
+    stack.innerHTML = ['NVDA','LLY','SOXL','JPM','COST'].map(tk => data.tickers[tk] ? renderCard(tk, data.tickers[tk]) : '').join('');
     wireToggles(data);
     document.getElementById('footer').textContent =
       'For personal research only — not investment advice. Auto-refreshes ~1hr after US market close.';
