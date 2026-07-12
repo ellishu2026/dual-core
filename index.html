@@ -243,11 +243,11 @@
   </div>
 
   <div class="section retr">
-    <div class="section-title"><span class="section-num">STRATEGY 2</span><h2>30-Day High Retracement</h2></div>
+    <div class="section-title"><span class="section-num">STRATEGY 2</span><h2>60-Day High Retracement</h2></div>
     <div class="pills">
-      <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>61.8%</code> of 30D High Enter <code>15%</code> → ≤<code>50%</code> Add <code>50%</code></span></div>
-      <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>30%</code> of 30D High Exit</span></div>
-      <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">≥<code>109%</code> of 30D High Half, ≥<code>120%</code> Exit</span></div>
+      <div class="pill entry"><span class="tag">Entry</span><span class="txt">≤<code>61.8%</code> of 60D High Enter <code>15%</code> → ≤<code>50%</code> Add <code>50%</code></span></div>
+      <div class="pill stop"><span class="tag">Stop Loss</span><span class="txt">≤<code>30%</code> of 60D High Exit</span></div>
+      <div class="pill tp"><span class="tag">Take Profit</span><span class="txt">≥<code>109%</code> of 60D High Half, ≥<code>120%</code> Exit</span></div>
       <div class="pill params" id="paramsToggle-retr" role="button" tabindex="0"><span class="tag">Parameters</span><span class="txt">Entry <code>15%→50%</code> · Stop <code>30%</code> · TP <code>109%/120%</code> <span class="chev">▸</span></span></div>
     </div>
     <div class="params-panel" id="paramsPanel-retr" style="display:none">
@@ -272,7 +272,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.3.4';
+const APP_VERSION = '1.3.5';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const TICKER_ORDER = ['NVDA','LLY','JPM','SOXL','AMBA'];
