@@ -132,7 +132,16 @@
   .mini-stat{font-family:var(--mono);font-size:12px;font-weight:600;}
   .mini-stat.stop{color:var(--stop);}
   .mini-stat.tp{color:var(--watch);}
-  .ticker{font-size:22px;font-weight:800;letter-spacing:0.3px;}
+  .ticker{font-size:22px;font-weight:800;letter-spacing:0.3px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+  .ticker .chev{font-size:13px;color:var(--muted);transition:transform 0.15s;display:inline-block;}
+  .card.collapsed .ticker .chev{transform:rotate(-90deg);}
+
+  .card.collapsed{padding-bottom:20px;}
+  .card.collapsed .card-top{margin-bottom:0;}
+  .card.collapsed .card-top-left > *:not(.ticker){display:none;}
+  .card.collapsed .tf-toggle{display:none;}
+  .card.collapsed .date{display:none;}
+  .card.collapsed .body-row{display:none;}
   .ticker.nvda{color:var(--nvda);}
   .ticker.lly{color:var(--lly);}
   .ticker.soxl{color:var(--soxl);}
@@ -272,7 +281,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.3.5';
+const APP_VERSION = '1.3.6';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const TICKER_ORDER = ['NVDA','LLY','JPM','SOXL','AMBA'];
@@ -408,7 +417,7 @@ function renderCard(ticker, t, ns){
   <div class="card ${cls}" data-ticker="${ticker}" data-ns="${ns}">
     <div class="card-top">
       <div class="card-top-left">
-        <div class="ticker ${cls}">${ticker}</div>
+        <div class="ticker ${cls}" data-role="collapse-toggle"><span class="chev">▾</span>${ticker}</div>
         <div class="price">$${fmt(t.price)}</div>
         <span class="badge ${b.cls}">${b.text}</span>
         <span class="mini-stat stop">Stop: $${fmt(t.stop_level)}</span>
@@ -492,11 +501,23 @@ function wireToggles(container, sectionData, ns){
   });
 }
 
+// click the ticker symbol to collapse/expand that one card down to just
+// its name — independent per card, works the same in both strategy
+// sections since it only touches the card's own DOM, no shared state
+function wireCollapse(container){
+  container.querySelectorAll('.ticker[data-role="collapse-toggle"]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      el.closest('.card').classList.toggle('collapsed');
+    });
+  });
+}
+
 // renders one whole section (all 5 tickers) into the given stack element
 function renderSection(stackElId, sectionData, ns){
   const stack = document.getElementById(stackElId);
   stack.innerHTML = TICKER_ORDER.map(tk => sectionData[tk] ? renderCard(tk, sectionData[tk], ns) : '').join('');
   wireToggles(stack, sectionData, ns);
+  wireCollapse(stack);
 }
 
 // which params.csv rows belong to which strategy section — retr_* and
