@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.3.3"
+VERSION = "1.3.4"
 TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "AMBA"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -92,7 +92,6 @@ DEFAULT_PARAMS = {
     "retr_add_ratio": 0.50,
     "retr_add_pct": 50.0,
     "retr_tp_half_ratio": 1.09,
-    "retr_tp_half_pct": 25.0,
     "retr_tp_full_ratio": 1.20,
     "retr_stop_ratio": 0.30,
 }
@@ -363,7 +362,6 @@ def run_retracement_state_machine(df: pd.DataFrame, params: dict) -> dict:
     add_ratio = params["retr_add_ratio"]
     add_pct = params["retr_add_pct"]
     tp_half_ratio = params["retr_tp_half_ratio"]
-    tp_half_pct = params["retr_tp_half_pct"]
     tp_full_ratio = params["retr_tp_full_ratio"]
     stop_ratio = params["retr_stop_ratio"]
 
@@ -412,9 +410,9 @@ def run_retracement_state_machine(df: pd.DataFrame, params: dict) -> dict:
         # ---- 3) Take profit — pure price ratio, no other gate ----
         if position_pct > 0:
             if not tp_half_done and high >= tp_half_ratio * ref:
-                position_pct = tp_half_pct
+                position_pct = position_pct / 2.0
                 tp_half_done = True
-                log(date, f"TP Reduce to {tp_half_pct:.0f}%", position_pct)
+                log(date, "TP Half Exit", position_pct)
             if high >= tp_full_ratio * ref:
                 position_pct = 0.0
                 tp_half_done = False
