@@ -1,6 +1,6 @@
 {
   "version": "1.3.3",
-  "updated_at": "2026-07-12T02:06:04+00:00",
+  "updated_at": "2026-07-12T02:15:08+00:00",
   "params_table": [
     {
       "param": "entry_ema120_pct",
@@ -124,7 +124,7 @@
     },
     {
       "param": "retr_days",
-      "meaning": "回撤策略-参考窗口(交易日)",
+      "meaning": "参考窗口(交易日)",
       "standard": "30",
       "NVDA": "",
       "LLY": "",
@@ -134,7 +134,7 @@
     },
     {
       "param": "retr_exclude_days",
-      "meaning": "回撤策略-参考高点滞后天数(交易日)",
+      "meaning": "参考高点滞后天数(交易日)",
       "standard": "5",
       "NVDA": "",
       "LLY": "",
@@ -144,7 +144,7 @@
     },
     {
       "param": "retr_enter_ratio",
-      "meaning": "回撤策略-开仓阈值(占参考高点比例)",
+      "meaning": "开仓阈值(占参考高点比例)",
       "standard": "0.618",
       "NVDA": "",
       "LLY": "",
@@ -154,7 +154,7 @@
     },
     {
       "param": "retr_enter_pct",
-      "meaning": "回撤策略-开仓仓位%",
+      "meaning": "开仓仓位%",
       "standard": "15",
       "NVDA": "",
       "LLY": "",
@@ -164,7 +164,7 @@
     },
     {
       "param": "retr_add_ratio",
-      "meaning": "回撤策略-加仓阈值(占参考高点比例)",
+      "meaning": "加仓阈值(占参考高点比例)",
       "standard": "0.5",
       "NVDA": "",
       "LLY": "",
@@ -174,7 +174,7 @@
     },
     {
       "param": "retr_add_pct",
-      "meaning": "回撤策略-加仓仓位%",
+      "meaning": "加仓仓位%",
       "standard": "50",
       "NVDA": "",
       "LLY": "",
@@ -184,7 +184,7 @@
     },
     {
       "param": "retr_tp_half_ratio",
-      "meaning": "回撤策略-止盈减仓阈值(占参考高点比例)",
+      "meaning": "止盈减仓阈值(占参考高点比例)",
       "standard": "1.09",
       "NVDA": "",
       "LLY": "",
@@ -194,7 +194,7 @@
     },
     {
       "param": "retr_tp_half_pct",
-      "meaning": "回撤策略-止盈减仓后仓位%",
+      "meaning": "止盈减仓后仓位%",
       "standard": "25",
       "NVDA": "",
       "LLY": "",
@@ -204,7 +204,7 @@
     },
     {
       "param": "retr_tp_full_ratio",
-      "meaning": "回撤策略-止盈清仓阈值(占参考高点比例)",
+      "meaning": "止盈清仓阈值(占参考高点比例)",
       "standard": "1.2",
       "NVDA": "",
       "LLY": "",
@@ -214,7 +214,7 @@
     },
     {
       "param": "retr_stop_ratio",
-      "meaning": "回撤策略-止损阈值(占参考高点比例)",
+      "meaning": "止损阈值(占参考高点比例)",
       "standard": "0.3",
       "NVDA": "",
       "LLY": "",
