@@ -1,6 +1,6 @@
 {
-  "version": "1.3.3",
-  "updated_at": "2026-07-12T02:15:08+00:00",
+  "version": "1.3.4",
+  "updated_at": "2026-07-12T02:48:21+00:00",
   "params_table": [
     {
       "param": "entry_ema120_pct",
@@ -146,9 +146,9 @@
       "param": "retr_enter_ratio",
       "meaning": "开仓阈值(占参考高点比例)",
       "standard": "0.618",
-      "NVDA": "",
-      "LLY": "",
-      "JPM": "",
+      "NVDA": "0.80",
+      "LLY": "0.80",
+      "JPM": "0.835",
       "SOXL": "",
       "AMBA": ""
     },
@@ -156,7 +156,7 @@
       "param": "retr_enter_pct",
       "meaning": "开仓仓位%",
       "standard": "15",
-      "NVDA": "",
+      "NVDA": "30",
       "LLY": "",
       "JPM": "",
       "SOXL": "",
@@ -166,9 +166,9 @@
       "param": "retr_add_ratio",
       "meaning": "加仓阈值(占参考高点比例)",
       "standard": "0.5",
-      "NVDA": "",
-      "LLY": "",
-      "JPM": "",
+      "NVDA": "0.75",
+      "LLY": "0.75",
+      "JPM": "0.80",
       "SOXL": "",
       "AMBA": ""
     },
@@ -176,7 +176,7 @@
       "param": "retr_add_pct",
       "meaning": "加仓仓位%",
       "standard": "50",
-      "NVDA": "",
+      "NVDA": "75",
       "LLY": "",
       "JPM": "",
       "SOXL": "",
@@ -186,16 +186,6 @@
       "param": "retr_tp_half_ratio",
       "meaning": "止盈减仓阈值(占参考高点比例)",
       "standard": "1.09",
-      "NVDA": "",
-      "LLY": "",
-      "JPM": "",
-      "SOXL": "",
-      "AMBA": ""
-    },
-    {
-      "param": "retr_tp_half_pct",
-      "meaning": "止盈减仓后仓位%",
-      "standard": "25",
       "NVDA": "",
       "LLY": "",
       "JPM": "",
@@ -1026,12 +1016,11 @@
           "strategy_mode": "ema",
           "retr_days": 30,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.618,
-          "retr_enter_pct": 15.0,
-          "retr_add_ratio": 0.5,
-          "retr_add_pct": 50.0,
+          "retr_enter_ratio": 0.8,
+          "retr_enter_pct": 30.0,
+          "retr_add_ratio": 0.75,
+          "retr_add_pct": 75.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -1049,14 +1038,30 @@
           "195": 190.11,
           "225": 186.97
         },
-        "position_pct": 0.0,
-        "status": "Watching",
+        "position_pct": 37.5,
+        "status": "Holding 38% (TP Reduced)",
         "aligned": false,
         "tp_high_hit": false,
-        "tp_half_done": false,
+        "tp_half_done": true,
         "stop_level": 69.68,
         "tp_level": 253.19,
-        "last_events": [],
+        "last_events": [
+          {
+            "date": "2024-07-25",
+            "action": "Enter 30%",
+            "position_pct": 30.0
+          },
+          {
+            "date": "2024-07-30",
+            "action": "Add to 75%",
+            "position_pct": 75.0
+          },
+          {
+            "date": "2025-05-13",
+            "action": "TP Half Exit",
+            "position_pct": 37.5
+          }
+        ],
         "chart": {
           "day": {
             "dates": [
@@ -1746,12 +1751,11 @@
           "strategy_mode": "ema",
           "retr_days": 30,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.618,
-          "retr_enter_pct": 15.0,
-          "retr_add_ratio": 0.5,
-          "retr_add_pct": 50.0,
+          "retr_enter_ratio": 0.8,
+          "retr_enter_pct": 30.0,
+          "retr_add_ratio": 0.75,
+          "retr_add_pct": 75.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -2554,12 +2558,11 @@
           "strategy_mode": "ema",
           "retr_days": 30,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.618,
+          "retr_enter_ratio": 0.8,
           "retr_enter_pct": 15.0,
-          "retr_add_ratio": 0.5,
+          "retr_add_ratio": 0.75,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -2577,14 +2580,25 @@
           "195": 997.7,
           "225": 983.91
         },
-        "position_pct": 0.0,
-        "status": "Watching",
+        "position_pct": 50.0,
+        "status": "Holding 50% (TP Reduced)",
         "aligned": false,
         "tp_high_hit": false,
-        "tp_half_done": false,
+        "tp_half_done": true,
         "stop_level": 371.4,
         "tp_level": 1349.42,
-        "last_events": [],
+        "last_events": [
+          {
+            "date": "2024-08-05",
+            "action": "Enter 15%",
+            "position_pct": 15.0
+          },
+          {
+            "date": "2025-04-07",
+            "action": "Add to 50%",
+            "position_pct": 50.0
+          }
+        ],
         "chart": {
           "day": {
             "dates": [
@@ -3274,12 +3288,11 @@
           "strategy_mode": "ema",
           "retr_days": 30,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.618,
+          "retr_enter_ratio": 0.8,
           "retr_enter_pct": 15.0,
-          "retr_add_ratio": 0.5,
+          "retr_add_ratio": 0.75,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -4062,12 +4075,11 @@
           "strategy_mode": "ema",
           "retr_days": 30,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.618,
+          "retr_enter_ratio": 0.835,
           "retr_enter_pct": 15.0,
-          "retr_add_ratio": 0.5,
+          "retr_add_ratio": 0.8,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -4085,8 +4097,8 @@
           "195": 305.27,
           "225": 302.49
         },
-        "position_pct": 25.0,
-        "status": "Holding 25% (TP Reduced)",
+        "position_pct": 50.0,
+        "status": "Holding 50% (TP Reduced)",
         "aligned": false,
         "tp_high_hit": false,
         "tp_half_done": true,
@@ -4782,12 +4794,11 @@
           "strategy_mode": "ema",
           "retr_days": 30,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.618,
+          "retr_enter_ratio": 0.835,
           "retr_enter_pct": 15.0,
-          "retr_add_ratio": 0.5,
+          "retr_add_ratio": 0.8,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -5675,7 +5686,6 @@
           "retr_add_ratio": 0.5,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -5723,8 +5733,8 @@
           },
           {
             "date": "2025-05-13",
-            "action": "TP Reduce to 25%",
-            "position_pct": 25.0
+            "action": "TP Half Exit",
+            "position_pct": 7.5
           },
           {
             "date": "2025-05-15",
@@ -5738,8 +5748,13 @@
           },
           {
             "date": "2026-01-09",
-            "action": "TP Reduce to 25%",
-            "position_pct": 25.0
+            "action": "TP Half Exit",
+            "position_pct": 7.5
+          },
+          {
+            "date": "2026-03-09",
+            "action": "Enter 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2026-04-10",
@@ -6451,7 +6466,6 @@
           "retr_add_ratio": 0.5,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -7264,7 +7278,6 @@
           "retr_add_ratio": 0.5,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
@@ -7307,7 +7320,7 @@
           },
           {
             "date": "2025-05-12",
-            "action": "TP Reduce to 25%",
+            "action": "TP Half Exit",
             "position_pct": 25.0
           },
           {
@@ -8010,7 +8023,6 @@
           "retr_add_ratio": 0.5,
           "retr_add_pct": 50.0,
           "retr_tp_half_ratio": 1.09,
-          "retr_tp_half_pct": 25.0,
           "retr_tp_full_ratio": 1.2,
           "retr_stop_ratio": 0.3
         }
