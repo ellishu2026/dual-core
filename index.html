@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dual Core · NVDA / LLY / JPM / SOXL / AMBA — Two Strategies</title>
+<title>Dual Core · NVDA/LLY/JPM (EMA) + SOXL/AMBA/ALAB (Retracement)</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.json">
@@ -27,6 +27,7 @@
     --jpm:#5B4B8A;
     --jpm-soft:#EDEAF4;
     --amba:#1C8C7A;
+    --alab:#C17817;
     --amba-soft:#E5F3F0;
     --watch:#B8862B;
     --watch-soft:#FBF1DE;
@@ -126,6 +127,7 @@
   .card.soxl{border-top:3px solid var(--soxl);}
   .card.jpm{border-top:3px solid var(--jpm);}
   .card.amba{border-top:3px solid var(--amba);}
+  .card.alab{border-top:3px solid var(--alab);}
 
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
   .card-top-left{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
@@ -147,6 +149,7 @@
   .ticker.soxl{color:var(--soxl);}
   .ticker.jpm{color:var(--jpm);}
   .ticker.amba{color:var(--amba);}
+  .ticker.alab{color:var(--alab);}
   .price{font-family:var(--mono);font-size:20px;font-weight:600;}
   .date{font-size:11px;color:var(--muted);}
 
@@ -281,10 +284,11 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.3.6';
+const APP_VERSION = '1.3.7';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
-const TICKER_ORDER = ['NVDA','LLY','JPM','SOXL','AMBA'];
+const EMA_TICKERS = ['NVDA','LLY','JPM'];
+const RETR_TICKERS = ['SOXL','AMBA','ALAB'];
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 // key EMAs the strategy actually acts on get distinct colors + a thicker
 // stroke; 20/60/120 are context-only and stay thin, light gray
@@ -298,8 +302,8 @@ const EMA_STYLE = {
   195: {color:'#3D5A80', width:2},     // 30% entry threshold
   225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
 };
-const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", JPM:"jpm", SOXL:"soxl", AMBA:"amba"};
-const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", JPM:"#5B4B8A", SOXL:"#3A5FA0", AMBA:"#1C8C7A"};
+const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", JPM:"jpm", SOXL:"soxl", AMBA:"amba", ALAB:"alab"};
+const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", JPM:"#5B4B8A", SOXL:"#3A5FA0", AMBA:"#1C8C7A", ALAB:"#C17817"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
@@ -512,10 +516,11 @@ function wireCollapse(container){
   });
 }
 
-// renders one whole section (all 5 tickers) into the given stack element
-function renderSection(stackElId, sectionData, ns){
+// renders one whole section into the given stack element, showing only
+// the tickers in tickerList (each section now has its own subset)
+function renderSection(stackElId, sectionData, ns, tickerList){
   const stack = document.getElementById(stackElId);
-  stack.innerHTML = TICKER_ORDER.map(tk => sectionData[tk] ? renderCard(tk, sectionData[tk], ns) : '').join('');
+  stack.innerHTML = tickerList.map(tk => sectionData[tk] ? renderCard(tk, sectionData[tk], ns) : '').join('');
   wireToggles(stack, sectionData, ns);
   wireCollapse(stack);
 }
@@ -524,16 +529,16 @@ function renderSection(stackElId, sectionData, ns){
 // strategy_mode go with Strategy 2, everything else with Strategy 1
 function isRetrParam(name){ return name.startsWith('retr_') || name === 'strategy_mode'; }
 
-function buildParamsTable(tableId, rows){
+function buildParamsTable(tableId, rows, tickerList){
   const tbody = document.querySelector(`#${tableId} tbody`);
   if (!rows.length){
     tbody.innerHTML = '<tr><td colspan="8" class="blank">No params for this strategy in params.csv</td></tr>';
     return;
   }
-  let html = `<tr><th>Param</th><th>Meaning</th><th>Standard</th>${TICKER_ORDER.map(t=>`<th>${t}</th>`).join('')}</tr>`;
+  let html = `<tr><th>Param</th><th>Meaning</th><th>Standard</th>${tickerList.map(t=>`<th>${t}</th>`).join('')}</tr>`;
   rows.forEach(r=>{
     html += `<tr><td>${r.param}</td><td class="meaning">${r.meaning||''}</td><td class="standard">${r.standard||''}</td>`;
-    TICKER_ORDER.forEach(t=>{
+    tickerList.forEach(t=>{
       const v = r[t];
       html += v ? `<td class="override">${v}</td>` : `<td class="blank">—</td>`;
     });
@@ -569,19 +574,19 @@ fetch(DATA_URL + '?_=' + Date.now())
       document.getElementById('tpExcludeDays').textContent = tpDaysRow.standard || '?';
     }
     const allParams = data.params_table || [];
-    buildParamsTable('paramsTable-ema', allParams.filter(r => !isRetrParam(r.param)));
-    buildParamsTable('paramsTable-retr', allParams.filter(r => isRetrParam(r.param)));
+    buildParamsTable('paramsTable-ema', allParams.filter(r => !isRetrParam(r.param)), EMA_TICKERS);
+    buildParamsTable('paramsTable-retr', allParams.filter(r => isRetrParam(r.param)), RETR_TICKERS);
 
     const emaData = {};
     const retrData = {};
-    TICKER_ORDER.forEach(tk=>{
-      if(data.tickers[tk]){
-        emaData[tk] = data.tickers[tk].ema;
-        retrData[tk] = data.tickers[tk].retracement;
-      }
+    EMA_TICKERS.forEach(tk=>{
+      if(data.tickers[tk]) emaData[tk] = data.tickers[tk].ema;
     });
-    renderSection('stack-ema', emaData, 'ema');
-    renderSection('stack-retr', retrData, 'retr');
+    RETR_TICKERS.forEach(tk=>{
+      if(data.tickers[tk]) retrData[tk] = data.tickers[tk].retracement;
+    });
+    renderSection('stack-ema', emaData, 'ema', EMA_TICKERS);
+    renderSection('stack-retr', retrData, 'retr', RETR_TICKERS);
 
     document.getElementById('footer').textContent =
       'For personal research only — not investment advice. Auto-refreshes ~1hr after US market close.';
