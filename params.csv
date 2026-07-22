@@ -1,4 +1,4 @@
-param,meaning,standard,NVDA,LLY,JPM,SOXL,AMBA,ALAB
+param,meaning,standard,NVDA,LLY,JPM,SOXL,ALAB,IONQ
 entry_ema120_pct,EMA120进场仓位%(最浅一档),5,,0,,,,
 entry_ema180_pct,EMA180加仓仓位%,15,,,,,,
 entry_ema195_pct,EMA195加仓仓位%,45,,,,,,
@@ -7,7 +7,7 @@ entry_price_mode,进场判断用价 (close=收盘价 / low=盘中最低价),clos
 stop_multiplier,止损倍数 (价格<=倍数*EMA225),0.9,,,,,,
 stop_price_mode,止损判断用价 (close=收盘价 / low=盘中最低价),close,,,,,,
 tp_multiplier,止盈触发倍数 (近1年高*倍数),1.09,,,,,,
-tp_exclude_days,止盈基准线滞后天数(交易日),30,,21,60,21,21,
+tp_exclude_days,止盈基准线滞后天数(交易日),30,,21,60,21,,
 tp_high_price_mode,止盈创新高判断用价 (close=收盘价 / high=盘中最高价),close,,,,,,
 tp_exit_price_mode,止盈减仓/清仓判断用价 (close=收盘价 / low=盘中最低价),close,,,,,,
 strategy_mode,策略模式 (ema=均线阶梯[默认] / retracement=30日高点百分比回撤),,,,,,,

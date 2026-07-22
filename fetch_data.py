@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-双核 (Dual Core) — NVDA / LLY / JPM / SOXL / AMBA EMA state-machine engine
+双核 (Dual Core) — NVDA / LLY / JPM / SOXL / ALAB / IONQ dual-strategy engine
 ============================================================================
 Pulls daily OHLC data from yfinance, computes the EMA ladder
 (5/9/20/60/120/180/195/225), replays the entry / stop-loss / take-profit
@@ -42,8 +42,8 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.3.7"
-TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "AMBA", "ALAB"]
+VERSION = "1.3.8"
+TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "ALAB", "IONQ"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
                     # just enough for EMA225/1y-high math to have inputs

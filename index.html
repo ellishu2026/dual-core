@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dual Core · NVDA/LLY/JPM (EMA) + SOXL/AMBA/ALAB (Retracement)</title>
+<title>Dual Core · NVDA/LLY/JPM (EMA) + SOXL/ALAB/IONQ (Retracement)</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.json">
@@ -26,9 +26,9 @@
     --soxl-soft:#E8ECF6;
     --jpm:#5B4B8A;
     --jpm-soft:#EDEAF4;
-    --amba:#1C8C7A;
+    --ionq:#1C8C7A;
     --alab:#C17817;
-    --amba-soft:#E5F3F0;
+    --ionq-soft:#E5F3F0;
     --watch:#B8862B;
     --watch-soft:#FBF1DE;
     --stop:#B4322B;
@@ -126,7 +126,7 @@
   .card.lly{border-top:3px solid var(--lly);}
   .card.soxl{border-top:3px solid var(--soxl);}
   .card.jpm{border-top:3px solid var(--jpm);}
-  .card.amba{border-top:3px solid var(--amba);}
+  .card.ionq{border-top:3px solid var(--ionq);}
   .card.alab{border-top:3px solid var(--alab);}
 
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
@@ -148,7 +148,7 @@
   .ticker.lly{color:var(--lly);}
   .ticker.soxl{color:var(--soxl);}
   .ticker.jpm{color:var(--jpm);}
-  .ticker.amba{color:var(--amba);}
+  .ticker.ionq{color:var(--ionq);}
   .ticker.alab{color:var(--alab);}
   .price{font-family:var(--mono);font-size:20px;font-weight:600;}
   .date{font-size:11px;color:var(--muted);}
@@ -284,11 +284,11 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.3.7';
+const APP_VERSION = '1.3.8';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_TICKERS = ['NVDA','LLY','JPM'];
-const RETR_TICKERS = ['SOXL','AMBA','ALAB'];
+const RETR_TICKERS = ['SOXL','ALAB','IONQ'];
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 // key EMAs the strategy actually acts on get distinct colors + a thicker
 // stroke; 20/60/120 are context-only and stay thin, light gray
@@ -302,8 +302,8 @@ const EMA_STYLE = {
   195: {color:'#3D5A80', width:2},     // 30% entry threshold
   225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
 };
-const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", JPM:"jpm", SOXL:"soxl", AMBA:"amba", ALAB:"alab"};
-const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", JPM:"#5B4B8A", SOXL:"#3A5FA0", AMBA:"#1C8C7A", ALAB:"#C17817"};
+const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", JPM:"jpm", SOXL:"soxl", ALAB:"alab", IONQ:"ionq"};
+const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", JPM:"#5B4B8A", SOXL:"#3A5FA0", ALAB:"#C17817", IONQ:"#1C8C7A"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
