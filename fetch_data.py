@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.3.9"
+VERSION = "1.4.0"
 TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "ALAB", "RKLB"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -87,13 +87,15 @@ DEFAULT_PARAMS = {
                                # reference so it can't be dragged up by the
                                # breakout day itself (see chat history: same
                                # self-referencing trap the EMA TP system had)
-    "retr_enter_ratio": 0.618,
+    "retr_enter_ratio": 0.50,
     "retr_enter_pct": 15.0,
-    "retr_add_ratio": 0.50,
+    "retr_add_ratio": 0.40,
     "retr_add_pct": 50.0,
+    "retr_add2_ratio": 0.30,
+    "retr_add2_pct": 75.0,
     "retr_tp_half_ratio": 1.09,
     "retr_tp_full_ratio": 1.20,
-    "retr_stop_ratio": 0.30,
+    "retr_stop_ratio": 0.20,
 }
 
 
@@ -361,6 +363,8 @@ def run_retracement_state_machine(df: pd.DataFrame, params: dict) -> dict:
     enter_pct = params["retr_enter_pct"]
     add_ratio = params["retr_add_ratio"]
     add_pct = params["retr_add_pct"]
+    add2_ratio = params["retr_add2_ratio"]
+    add2_pct = params["retr_add2_pct"]
     tp_half_ratio = params["retr_tp_half_ratio"]
     tp_full_ratio = params["retr_tp_full_ratio"]
     stop_ratio = params["retr_stop_ratio"]
@@ -368,7 +372,7 @@ def run_retracement_state_machine(df: pd.DataFrame, params: dict) -> dict:
     position_pct = 0.0
     tp_half_done = False
     armed = True              # disarmed after a stop-loss; re-arms once
-                               # Close recovers back above add_ratio*ref
+                               # Close recovers back above add2_ratio*ref
                                # (mirrors the EMA system's "clear the
                                # deepest tier" re-arm logic)
     events = []
@@ -385,7 +389,7 @@ def run_retracement_state_machine(df: pd.DataFrame, params: dict) -> dict:
         if pd.isna(ref):
             continue
 
-        if not armed and close > add_ratio * ref:
+        if not armed and close > add2_ratio * ref:
             armed = True
 
         # ---- 1) Stop loss (highest priority) ----
@@ -398,7 +402,11 @@ def run_retracement_state_machine(df: pd.DataFrame, params: dict) -> dict:
 
         # ---- 2) Entry / scale-in ladder ----
         if armed:
-            if low <= add_ratio * ref:
+            if low <= add2_ratio * ref:
+                if position_pct < add2_pct:
+                    position_pct = add2_pct
+                    log(date, f"Add to {add2_pct:.0f}%", position_pct)
+            elif low <= add_ratio * ref:
                 if position_pct < add_pct:
                     position_pct = add_pct
                     log(date, f"Add to {add_pct:.0f}%", position_pct)
