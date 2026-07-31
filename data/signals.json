@@ -1,6 +1,6 @@
 {
-  "version": "1.4.1",
-  "updated_at": "2026-07-31T00:05:21+00:00",
+  "version": "1.4.2",
+  "updated_at": "2026-07-31T02:00:35+00:00",
   "params_table": [
     {
       "param": "entry_ema120_pct",
@@ -16,7 +16,7 @@
     {
       "param": "entry_ema180_pct",
       "meaning": "EMA180加仓仓位%",
-      "standard": "15",
+      "standard": "10",
       "NVDA": "",
       "LLY": "",
       "JPM": "",
@@ -27,7 +27,7 @@
     {
       "param": "entry_ema195_pct",
       "meaning": "EMA195加仓仓位%",
-      "standard": "45",
+      "standard": "15",
       "NVDA": "",
       "LLY": "",
       "JPM": "",
@@ -38,7 +38,7 @@
     {
       "param": "entry_ema225_pct",
       "meaning": "EMA225加仓仓位%",
-      "standard": "75",
+      "standard": "30",
       "NVDA": "",
       "LLY": "",
       "JPM": "",
@@ -271,8 +271,8 @@
           "195": 191.93,
           "225": 188.94
         },
-        "position_pct": 45.0,
-        "status": "Holding 45%",
+        "position_pct": 15.0,
+        "status": "Holding 15%",
         "aligned": true,
         "tp_high_hit": false,
         "tp_half_done": false,
@@ -306,13 +306,13 @@
           },
           {
             "date": "2025-01-27",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2025-01-28",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-04-03",
@@ -331,28 +331,28 @@
           },
           {
             "date": "2026-02-04",
+            "action": "Add to 10%",
+            "position_pct": 10.0
+          },
+          {
+            "date": "2026-03-20",
             "action": "Add to 15%",
             "position_pct": 15.0
           },
           {
-            "date": "2026-03-20",
-            "action": "Add to 45%",
-            "position_pct": 45.0
-          },
-          {
             "date": "2026-03-26",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2026-05-13",
             "action": "TP High Trigger",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2026-05-18",
             "action": "TP Half Exit",
-            "position_pct": 37.5
+            "position_pct": 15.0
           },
           {
             "date": "2026-05-21",
@@ -366,18 +366,18 @@
           },
           {
             "date": "2026-06-29",
-            "action": "Add to 15%",
-            "position_pct": 15.0
+            "action": "Add to 10%",
+            "position_pct": 10.0
           },
           {
             "date": "2026-07-14",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 15.0
+            "position_pct": 10.0
           },
           {
             "date": "2026-07-29",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           }
         ],
         "chart": {
@@ -1056,9 +1056,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "low",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -1783,9 +1783,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "low",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -1832,23 +1832,23 @@
         "last_events": [
           {
             "date": "2024-10-31",
+            "action": "Add to 10%",
+            "position_pct": 10.0
+          },
+          {
+            "date": "2024-11-01",
             "action": "Add to 15%",
             "position_pct": 15.0
           },
           {
-            "date": "2024-11-01",
-            "action": "Add to 45%",
-            "position_pct": 45.0
-          },
-          {
             "date": "2024-11-06",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-02-06",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2025-04-07",
@@ -1857,13 +1857,13 @@
           },
           {
             "date": "2025-05-01",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-05-01",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2025-05-14",
@@ -1872,13 +1872,13 @@
           },
           {
             "date": "2025-06-17",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-07-25",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2025-08-07",
@@ -1887,28 +1887,28 @@
           },
           {
             "date": "2026-03-17",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2026-03-18",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2026-05-15",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2026-06-29",
             "action": "TP High Trigger",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2026-07-10",
             "action": "TP Half Exit",
-            "position_pct": 37.5
+            "position_pct": 15.0
           },
           {
             "date": "2026-07-10",
@@ -2592,9 +2592,9 @@
         },
         "params": {
           "entry_ema120_pct": 0.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -3319,9 +3319,9 @@
         },
         "params": {
           "entry_ema120_pct": 0.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -3358,8 +3358,8 @@
           "195": 310.83,
           "225": 307.68
         },
-        "position_pct": 75.0,
-        "status": "Holding 75%",
+        "position_pct": 30.0,
+        "status": "Holding 30%",
         "aligned": true,
         "tp_high_hit": false,
         "tp_half_done": false,
@@ -3373,33 +3373,33 @@
           },
           {
             "date": "2025-03-10",
+            "action": "Add to 10%",
+            "position_pct": 10.0
+          },
+          {
+            "date": "2025-03-11",
             "action": "Add to 15%",
             "position_pct": 15.0
           },
           {
-            "date": "2025-03-11",
-            "action": "Add to 45%",
-            "position_pct": 45.0
-          },
-          {
             "date": "2025-03-13",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-05-08",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2025-09-11",
             "action": "TP High Trigger",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2025-10-01",
             "action": "TP Half Exit",
-            "position_pct": 37.5
+            "position_pct": 15.0
           },
           {
             "date": "2025-10-01",
@@ -3418,18 +3418,18 @@
           },
           {
             "date": "2026-02-23",
+            "action": "Add to 10%",
+            "position_pct": 10.0
+          },
+          {
+            "date": "2026-03-05",
             "action": "Add to 15%",
             "position_pct": 15.0
           },
           {
-            "date": "2026-03-05",
-            "action": "Add to 45%",
-            "position_pct": 45.0
-          },
-          {
             "date": "2026-03-06",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           }
         ],
         "chart": {
@@ -4108,9 +4108,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -4829,9 +4829,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -4868,8 +4868,8 @@
           "195": 117.44,
           "225": 109.91
         },
-        "position_pct": 45.0,
-        "status": "Holding 45%",
+        "position_pct": 15.0,
+        "status": "Holding 15%",
         "aligned": false,
         "tp_high_hit": false,
         "tp_half_done": false,
@@ -4883,13 +4883,13 @@
           },
           {
             "date": "2024-08-15",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2024-08-22",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2024-09-03",
@@ -4903,8 +4903,8 @@
           },
           {
             "date": "2024-09-27",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2024-10-01",
@@ -4913,13 +4913,13 @@
           },
           {
             "date": "2024-10-09",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2024-10-10",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2024-10-23",
@@ -4928,13 +4928,13 @@
           },
           {
             "date": "2024-10-29",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2024-10-30",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2024-10-31",
@@ -4943,8 +4943,8 @@
           },
           {
             "date": "2025-01-24",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-01-27",
@@ -4953,23 +4953,23 @@
           },
           {
             "date": "2025-07-01",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-07-01",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2025-10-20",
             "action": "TP High Trigger",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2025-10-22",
             "action": "TP Half Exit",
-            "position_pct": 37.5
+            "position_pct": 15.0
           },
           {
             "date": "2025-10-22",
@@ -4978,23 +4978,23 @@
           },
           {
             "date": "2025-11-20",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2025-12-03",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2026-01-06",
             "action": "TP High Trigger",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2026-01-08",
             "action": "TP Half Exit",
-            "position_pct": 22.5
+            "position_pct": 7.5
           },
           {
             "date": "2026-01-30",
@@ -5008,23 +5008,23 @@
           },
           {
             "date": "2026-03-30",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2026-04-09",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2026-04-13",
             "action": "TP High Trigger",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2026-04-28",
             "action": "TP Half Exit",
-            "position_pct": 37.5
+            "position_pct": 15.0
           },
           {
             "date": "2026-05-15",
@@ -5038,8 +5038,8 @@
           },
           {
             "date": "2026-07-28",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2026-07-29",
@@ -5048,8 +5048,8 @@
           },
           {
             "date": "2026-07-30",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           }
         ],
         "chart": {
@@ -5728,9 +5728,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -6500,9 +6500,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -6549,13 +6549,13 @@
         "last_events": [
           {
             "date": "2025-01-27",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2025-02-25",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2025-02-28",
@@ -6569,23 +6569,23 @@
           },
           {
             "date": "2025-11-17",
+            "action": "Add to 10%",
+            "position_pct": 10.0
+          },
+          {
+            "date": "2025-11-18",
             "action": "Add to 15%",
             "position_pct": 15.0
           },
           {
-            "date": "2025-11-18",
-            "action": "Add to 45%",
-            "position_pct": 45.0
-          },
-          {
             "date": "2026-01-13",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2026-02-04",
-            "action": "Add to 75%",
-            "position_pct": 75.0
+            "action": "Add to 30%",
+            "position_pct": 30.0
           },
           {
             "date": "2026-02-12",
@@ -7274,9 +7274,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -8051,9 +8051,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -8101,12 +8101,12 @@
           {
             "date": "2024-08-19",
             "action": "TP High Trigger",
-            "position_pct": 75.0
+            "position_pct": 30.0
           },
           {
             "date": "2024-08-26",
             "action": "TP Half Exit",
-            "position_pct": 37.5
+            "position_pct": 15.0
           },
           {
             "date": "2024-08-27",
@@ -8120,28 +8120,28 @@
           },
           {
             "date": "2025-03-10",
+            "action": "Add to 10%",
+            "position_pct": 10.0
+          },
+          {
+            "date": "2025-04-04",
             "action": "Add to 15%",
             "position_pct": 15.0
           },
           {
-            "date": "2025-04-04",
-            "action": "Add to 45%",
-            "position_pct": 45.0
-          },
-          {
             "date": "2025-05-05",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2025-06-26",
             "action": "TP High Trigger",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2025-07-01",
             "action": "TP Half Exit",
-            "position_pct": 22.5
+            "position_pct": 7.5
           },
           {
             "date": "2025-07-28",
@@ -8155,23 +8155,23 @@
           },
           {
             "date": "2025-11-20",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2025-12-12",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2025-12-22",
             "action": "TP High Trigger",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2025-12-26",
             "action": "TP Half Exit",
-            "position_pct": 22.5
+            "position_pct": 7.5
           },
           {
             "date": "2026-01-21",
@@ -8185,23 +8185,23 @@
           },
           {
             "date": "2026-03-30",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2026-04-16",
             "action": "Bullish Stack Confirmed",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2026-05-08",
             "action": "TP High Trigger",
-            "position_pct": 45.0
+            "position_pct": 15.0
           },
           {
             "date": "2026-05-21",
             "action": "TP Half Exit",
-            "position_pct": 22.5
+            "position_pct": 7.5
           },
           {
             "date": "2026-06-01",
@@ -8215,13 +8215,13 @@
           },
           {
             "date": "2026-07-10",
-            "action": "Add to 15%",
-            "position_pct": 15.0
+            "action": "Add to 10%",
+            "position_pct": 10.0
           },
           {
             "date": "2026-07-13",
-            "action": "Add to 45%",
-            "position_pct": 45.0
+            "action": "Add to 15%",
+            "position_pct": 15.0
           },
           {
             "date": "2026-07-16",
@@ -8905,9 +8905,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
@@ -9652,9 +9652,9 @@
         },
         "params": {
           "entry_ema120_pct": 5.0,
-          "entry_ema180_pct": 15.0,
-          "entry_ema195_pct": 45.0,
-          "entry_ema225_pct": 75.0,
+          "entry_ema180_pct": 10.0,
+          "entry_ema195_pct": 15.0,
+          "entry_ema225_pct": 30.0,
           "entry_price_mode": "close",
           "stop_multiplier": 0.9,
           "stop_price_mode": "close",
