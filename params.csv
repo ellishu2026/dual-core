@@ -1,8 +1,8 @@
 param,meaning,standard,NVDA,LLY,JPM,SOXL,ALAB,RKLB
 entry_ema120_pct,EMA120进场仓位%(最浅一档),5,,0,,,,
-entry_ema180_pct,EMA180加仓仓位%,15,,,,,,
-entry_ema195_pct,EMA195加仓仓位%,45,,,,,,
-entry_ema225_pct,EMA225加仓仓位%,75,,,,,,
+entry_ema180_pct,EMA180加仓仓位%,10,,,,,,
+entry_ema195_pct,EMA195加仓仓位%,15,,,,,,
+entry_ema225_pct,EMA225加仓仓位%,30,,,,,,
 entry_price_mode,进场判断用价 (close=收盘价 / low=盘中最低价),close,low,,,,,
 stop_multiplier,止损倍数 (价格<=倍数*EMA225),0.9,,,,,,
 stop_price_mode,止损判断用价 (close=收盘价 / low=盘中最低价),close,,,,,,

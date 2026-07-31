@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.4.1"
+VERSION = "1.4.2"
 TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "ALAB", "RKLB"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -67,9 +67,9 @@ INT_PARAMS = {"tp_exclude_days", "retr_days", "retr_exclude_days"}
 
 DEFAULT_PARAMS = {
     "entry_ema120_pct": 5.0,
-    "entry_ema180_pct": 15.0,
-    "entry_ema195_pct": 45.0,
-    "entry_ema225_pct": 75.0,
+    "entry_ema180_pct": 10.0,
+    "entry_ema195_pct": 15.0,
+    "entry_ema225_pct": 30.0,
     "entry_price_mode": "close",
     "stop_multiplier": 0.9,
     "stop_price_mode": "close",
