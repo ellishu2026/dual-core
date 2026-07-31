@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.4.0"
+VERSION = "1.4.1"
 TICKERS = ["NVDA", "LLY", "JPM", "SOXL", "ALAB", "RKLB"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -88,10 +88,10 @@ DEFAULT_PARAMS = {
                                # breakout day itself (see chat history: same
                                # self-referencing trap the EMA TP system had)
     "retr_enter_ratio": 0.50,
-    "retr_enter_pct": 15.0,
+    "retr_enter_pct": 5.0,
     "retr_add_ratio": 0.40,
-    "retr_add_pct": 50.0,
-    "retr_add2_ratio": 0.30,
+    "retr_add_pct": 25.0,
+    "retr_add2_ratio": 0.33,
     "retr_add2_pct": 75.0,
     "retr_tp_half_ratio": 1.09,
     "retr_tp_full_ratio": 1.20,
