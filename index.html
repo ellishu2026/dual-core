@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dual Core · NVDA/LLY/JPM (EMA) + SOXL/ALAB/RKLB (Retracement)</title>
+<title>Dual Core · NVDA/JPM (EMA) + SOXL/ALAB/RKLB/DECK (Retracement)</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.json">
@@ -20,8 +20,8 @@
     --line:#E7E5DF;
     --nvda:#2F7D4F;
     --nvda-soft:#E6F2EA;
-    --lly:#B4322B;
-    --lly-soft:#F7E9E7;
+    --deck:#B4322B;
+    --deck-soft:#F7E9E7;
     --soxl:#3A5FA0;
     --soxl-soft:#E8ECF6;
     --jpm:#5B4B8A;
@@ -123,7 +123,7 @@
     padding:20px 22px 22px;
   }
   .card.nvda{border-top:3px solid var(--nvda);}
-  .card.lly{border-top:3px solid var(--lly);}
+  .card.deck{border-top:3px solid var(--deck);}
   .card.soxl{border-top:3px solid var(--soxl);}
   .card.jpm{border-top:3px solid var(--jpm);}
   .card.rklb{border-top:3px solid var(--rklb);}
@@ -145,7 +145,7 @@
   .card.collapsed .date{display:none;}
   .card.collapsed .body-row{display:none;}
   .ticker.nvda{color:var(--nvda);}
-  .ticker.lly{color:var(--lly);}
+  .ticker.deck{color:var(--deck);}
   .ticker.soxl{color:var(--soxl);}
   .ticker.jpm{color:var(--jpm);}
   .ticker.rklb{color:var(--rklb);}
@@ -284,11 +284,11 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.4.3';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
-const EMA_TICKERS = ['NVDA','LLY','JPM'];
-const RETR_TICKERS = ['SOXL','ALAB','RKLB'];
+const EMA_TICKERS = ['NVDA','JPM'];
+const RETR_TICKERS = ['SOXL','ALAB','RKLB','DECK'];
 const EMA_ORDER = [5,9,20,60,120,180,195,225]; // short to long
 // key EMAs the strategy actually acts on get distinct colors + a thicker
 // stroke; 20/60/120 are context-only and stay thin, light gray
@@ -302,8 +302,8 @@ const EMA_STYLE = {
   195: {color:'#3D5A80', width:2},     // 30% entry threshold
   225: {color:'#293241', width:2.4},   // 75% entry / stop-loss reference
 };
-const TICKER_CLASS = {NVDA:"nvda", LLY:"lly", JPM:"jpm", SOXL:"soxl", ALAB:"alab", RKLB:"rklb"};
-const TICKER_COLOR = {NVDA:"#2F7D4F", LLY:"#B4322B", JPM:"#5B4B8A", SOXL:"#3A5FA0", ALAB:"#C17817", RKLB:"#1C8C7A"};
+const TICKER_CLASS = {NVDA:"nvda", JPM:"jpm", SOXL:"soxl", ALAB:"alab", RKLB:"rklb", DECK:"deck"};
+const TICKER_COLOR = {NVDA:"#2F7D4F", JPM:"#5B4B8A", SOXL:"#3A5FA0", ALAB:"#C17817", RKLB:"#1C8C7A", DECK:"#B4322B"};
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
@@ -483,7 +483,7 @@ function wireChartHover(ticker, ns){
   rect.addEventListener('mouseleave', resetToLatest);
 }
 
-// container = the section's .stack element; sectionData = {NVDA:{...}, LLY:{...}, ...}
+// container = the section's .stack element; sectionData = {NVDA:{...}, JPM:{...}, ...}
 // (already the .ema or .retracement sub-object per ticker); ns = 'ema'|'retr'
 function wireToggles(container, sectionData, ns){
   container.querySelectorAll('.tf-toggle').forEach(toggle=>{
