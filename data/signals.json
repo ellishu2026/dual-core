@@ -1,6 +1,6 @@
 {
-  "version": "1.4.5",
-  "updated_at": "2026-08-07T23:03:39+00:00",
+  "version": "1.4.6",
+  "updated_at": "2026-08-08T13:51:44+00:00",
   "params_table": [
     {
       "param": "entry_ema120_pct",
@@ -148,7 +148,7 @@
       "standard": "0.50",
       "NVDA": "0.80",
       "JPM": "0.835",
-      "SOXL": "",
+      "SOXL": "0.40",
       "ALAB": "",
       "RKLB": ""
     },
@@ -158,7 +158,7 @@
       "standard": "10",
       "NVDA": "30",
       "JPM": "",
-      "SOXL": "",
+      "SOXL": "5",
       "ALAB": "",
       "RKLB": ""
     },
@@ -168,7 +168,7 @@
       "standard": "0.40",
       "NVDA": "0.75",
       "JPM": "0.80",
-      "SOXL": "",
+      "SOXL": "0.35",
       "ALAB": "",
       "RKLB": ""
     },
@@ -178,7 +178,7 @@
       "standard": "30",
       "NVDA": "75",
       "JPM": "",
-      "SOXL": "",
+      "SOXL": "10",
       "ALAB": "",
       "RKLB": ""
     },
@@ -188,7 +188,7 @@
       "standard": "0.33",
       "NVDA": "",
       "JPM": "",
-      "SOXL": "",
+      "SOXL": "0.30",
       "ALAB": "",
       "RKLB": ""
     },
@@ -198,7 +198,7 @@
       "standard": "60",
       "NVDA": "",
       "JPM": "",
-      "SOXL": "",
+      "SOXL": "20",
       "ALAB": "",
       "RKLB": ""
     },
@@ -228,7 +228,7 @@
       "standard": "0.20",
       "NVDA": "",
       "JPM": "",
-      "SOXL": "",
+      "SOXL": "0.15",
       "ALAB": "",
       "RKLB": ""
     }
@@ -4166,15 +4166,15 @@
           "strategy_mode": "ema",
           "retr_days": 60,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.5,
-          "retr_enter_pct": 10.0,
-          "retr_add_ratio": 0.4,
-          "retr_add_pct": 30.0,
-          "retr_add2_ratio": 0.33,
-          "retr_add2_pct": 60.0,
+          "retr_enter_ratio": 0.4,
+          "retr_enter_pct": 5.0,
+          "retr_add_ratio": 0.35,
+          "retr_add_pct": 10.0,
+          "retr_add2_ratio": 0.3,
+          "retr_add2_pct": 20.0,
           "retr_tp_half_ratio": 1.09,
           "retr_tp_full_ratio": 1.2,
-          "retr_stop_ratio": 0.2
+          "retr_stop_ratio": 0.15
         }
       },
       "retracement": {
@@ -4190,33 +4190,23 @@
           "195": 118.16,
           "225": 110.92
         },
-        "position_pct": 60.0,
-        "status": "Holding 60%",
+        "position_pct": 10.0,
+        "status": "Holding 10%",
         "aligned": false,
         "tp_high_hit": false,
         "tp_half_done": false,
-        "stop_level": 60.4,
+        "stop_level": 45.3,
         "tp_level": 329.18,
         "last_events": [
           {
-            "date": "2025-04-03",
-            "action": "Add to 60%",
-            "position_pct": 60.0
-          },
-          {
-            "date": "2025-04-07",
-            "action": "Stop-Loss Exit",
-            "position_pct": 0.0
-          },
-          {
-            "date": "2025-04-09",
-            "action": "Add to 60%",
-            "position_pct": 60.0
+            "date": "2025-04-04",
+            "action": "Add to 20%",
+            "position_pct": 20.0
           },
           {
             "date": "2025-06-26",
             "action": "TP Half Exit",
-            "position_pct": 30.0
+            "position_pct": 10.0
           },
           {
             "date": "2025-10-06",
@@ -4224,19 +4214,14 @@
             "position_pct": 0.0
           },
           {
-            "date": "2026-07-07",
-            "action": "Enter 10%",
-            "position_pct": 10.0
-          },
-          {
             "date": "2026-07-17",
-            "action": "Add to 30%",
-            "position_pct": 30.0
+            "action": "Enter 5%",
+            "position_pct": 5.0
           },
           {
-            "date": "2026-07-29",
-            "action": "Add to 60%",
-            "position_pct": 60.0
+            "date": "2026-07-28",
+            "action": "Add to 10%",
+            "position_pct": 10.0
           }
         ],
         "chart": {
@@ -4928,15 +4913,15 @@
           "strategy_mode": "ema",
           "retr_days": 60,
           "retr_exclude_days": 5,
-          "retr_enter_ratio": 0.5,
-          "retr_enter_pct": 10.0,
-          "retr_add_ratio": 0.4,
-          "retr_add_pct": 30.0,
-          "retr_add2_ratio": 0.33,
-          "retr_add2_pct": 60.0,
+          "retr_enter_ratio": 0.4,
+          "retr_enter_pct": 5.0,
+          "retr_add_ratio": 0.35,
+          "retr_add_pct": 10.0,
+          "retr_add2_ratio": 0.3,
+          "retr_add2_pct": 20.0,
           "retr_tp_half_ratio": 1.09,
           "retr_tp_full_ratio": 1.2,
-          "retr_stop_ratio": 0.2
+          "retr_stop_ratio": 0.15
         }
       }
     },
