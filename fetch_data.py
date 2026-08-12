@@ -42,7 +42,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.4.8"
+VERSION = "1.4.9"
 TICKERS = ["NVDA", "JPM", "SOXL", "ALAB", "RKLB", "AMBA"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -59,6 +59,17 @@ WARMUP_DAYS = 600   # ~2.7y at ~225 trading days/year — comfortably more than
                      # reset it first. Discarding the state-machine's
                      # warm-up window (EMAs themselves still use full
                      # history for accuracy) closes that gap.
+MIN_STATE_ROWS = 250  # floor for the warm-up trim: a recently-listed
+                       # ticker (e.g. ALAB, IPO'd ~600 trading days ago)
+                       # can have total history barely above WARMUP_DAYS,
+                       # and trimming a fixed 600 would leave ~1 row —
+                       # which silently produced a 1-point chart carrying
+                       # stale EMA-strategy stop/tp values. Never trim
+                       # below this many rows; for such short-history
+                       # tickers the first-day EMA-seed artifact is an
+                       # accepted, minor imperfection vs. losing the
+                       # ticker entirely. ~250 ≈ 1 trading year, enough
+                       # for the chart tails and a meaningful replay.
 
 PARAMS_FILE = "params.csv"
 PRICE_MODE_PARAMS = {"entry_price_mode", "stop_price_mode", "tp_high_price_mode", "tp_exit_price_mode"}
@@ -473,9 +484,13 @@ def fetch_one(ticker: str, params_rows: list) -> dict:
     # drop the warm-up window (see WARMUP_DAYS comment above) before replaying
     # the state machine — EMAs above were already computed on the FULL
     # history, so this only affects which rows count as "state-eligible",
-    # not the accuracy of the EMA values themselves
-    if len(hist) > WARMUP_DAYS:
+    # not the accuracy of the EMA values themselves. Cap the trim at
+    # MIN_STATE_ROWS so a short-history ticker isn't reduced to ~nothing.
+    if len(hist) > WARMUP_DAYS + MIN_STATE_ROWS:
         hist = hist.iloc[WARMUP_DAYS:].reset_index(drop=True)
+    elif len(hist) > MIN_STATE_ROWS:
+        hist = hist.iloc[len(hist) - MIN_STATE_ROWS:].reset_index(drop=True)
+    # else: leave hist as-is (already at or below the floor)
     # both strategies run for every ticker now — not either/or. The page
     # shows two independent sections (EMA ladder, then 30-day-high
     # retracement), each with all 5 tickers, so both results are needed
