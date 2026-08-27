@@ -1,4 +1,4 @@
-param,meaning,standard,NVDA,JPM,SOXL,ALAB,RKLB,AAPL
+param,meaning,standard,NVDA,JPM,SOXL,ALAB,RKLB,WMT
 entry_ema120_pct,EMA120进场仓位%(最浅一档),5,,,,,,
 entry_ema180_pct,EMA180加仓仓位%,10,,,,,,
 entry_ema195_pct,EMA195加仓仓位%,15,,,,,,
