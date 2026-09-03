@@ -290,7 +290,7 @@
 // data.version, which only updates when the data pipeline actually runs)
 // — that made UI-only deploys look "not updated" since no new fetch had
 // happened. Bump this by hand whenever index.html itself changes.
-const APP_VERSION = '1.5.2';
+const APP_VERSION = '1.5.3';
 
 const DATA_URL = 'https://raw.githubusercontent.com/ellishu2026/dual-core/main/data/signals.json';
 const EMA_TICKERS = ['NVDA','WMT','JPM'];
@@ -313,6 +313,19 @@ const TICKER_COLOR = {NVDA:"#2F7D4F", JPM:"#5B4B8A", WMT:"#556270", SOXL:"#3A5FA
 
 function fmt(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDate(d){ const [y,m,day] = d.split('-'); return `${parseInt(m,10)}/${parseInt(day,10)}`; }
+// Safari/iOS's new Date() throws "did not match the expected pattern" on
+// ISO strings with a "+00:00" offset (Chrome tolerates it). Normalize to a
+// form all engines accept, and never let a date-format hiccup blank the
+// whole page — fall back to the raw string on any failure.
+function fmtUpdatedAt(s){
+  if(!s) return '';
+  try{
+    const iso = s.replace(' ', 'T').replace('+00:00', 'Z');
+    const dt = new Date(iso);
+    if(isNaN(dt.getTime())) return s;
+    return dt.toLocaleString('en-US');
+  }catch(e){ return s; }
+}
 
 function emaColor(period){ return EMA_STYLE[period].color; }
 function emaWidth(period){ return EMA_STYLE[period].width; }
@@ -574,7 +587,7 @@ fetch(DATA_URL + '?_=' + Date.now())
   .then(data=>{
     document.getElementById('verPill').textContent = 'v' + APP_VERSION;
     document.getElementById('meta').textContent =
-      `Source yfinance · Updated ${new Date(data.updated_at).toLocaleString('en-US')}`;
+      `Source yfinance · Updated ${fmtUpdatedAt(data.updated_at)}`;
     const tpDaysRow = (data.params_table || []).find(r => r.param === 'tp_exclude_days');
     if (tpDaysRow) {
       document.getElementById('tpExcludeDays').textContent = tpDaysRow.standard || '?';
