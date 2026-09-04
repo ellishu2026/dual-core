@@ -36,13 +36,14 @@ always Close-based and not currently configurable.
 
 import csv
 import json
+import math
 import sys
 from datetime import datetime, timezone
 
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.5.3"
+VERSION = "1.5.4"
 TICKERS = ["NVDA", "WMT", "JPM", "SOXL", "ALAB", "RKLB"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -502,6 +503,25 @@ def fetch_one(ticker: str, params_rows: list) -> dict:
     }
 
 
+def sanitize_for_json(obj):
+    """Recursively replace NaN / +Inf / -Inf with None so the output is
+    strictly-valid JSON. Python's json.dump writes bare NaN/Infinity tokens
+    by default, which Python can re-read but browsers' JSON.parse CANNOT —
+    a single NaN anywhere makes the whole signals.json unparseable in the
+    browser, blanking every ticker card with a cryptic "did not match the
+    expected pattern" (Safari) / "Unexpected token N" (Chrome) error. NaNs
+    slip in from float math on gappy/short data (e.g. a ratio with a missing
+    input). Turning them into null lets the frontend render everything else
+    and just skip the one missing value."""
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_for_json(v) for v in obj]
+    return obj
+
+
 def build_params_table(params_rows: list) -> list:
     """Raw params.csv content (param/meaning/standard/per-ticker), trimmed
     to only the tickers currently tracked — for the frontend's collapsible
@@ -540,7 +560,12 @@ def main():
             sys.exit(1)
 
     with open("data/signals.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
+        # sanitize_for_json turns any NaN/Inf into null; allow_nan=False then
+        # makes json.dump RAISE rather than silently emit an invalid token —
+        # so if a NaN ever slips past the sanitizer, the workflow fails loudly
+        # instead of shipping a signals.json the browser can't parse.
+        json.dump(sanitize_for_json(result), f, ensure_ascii=False,
+                  indent=2, allow_nan=False)
     print("Wrote data/signals.json")
 
 
