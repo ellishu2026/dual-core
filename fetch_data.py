@@ -43,7 +43,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import yfinance as yf
 
-VERSION = "1.5.4"
+VERSION = "1.5.5"
 TICKERS = ["NVDA", "WMT", "JPM", "SOXL", "ALAB", "RKLB"]
 EMA_PERIODS = [5, 9, 20, 60, 120, 180, 195, 225]
 LOOKBACK = "10y"  # need real burn-in room now (see WARMUP_DAYS below), not
@@ -475,6 +475,15 @@ def fetch_one(ticker: str, params_rows: list) -> dict:
     if hist.empty:
         raise RuntimeError(f"yfinance returned no data for {ticker}")
     hist = hist.reset_index()
+    # Drop any bar with no valid Close. yfinance can return a current-day bar
+    # whose Close hasn't settled yet (NaN) if the pull happens in the
+    # after-hours window — that phantom bar otherwise flows through as a
+    # null price, rendering as a $0.00 spike that nukes the chart's y-axis.
+    # Dropping it here means the dashboard simply shows the last fully-closed
+    # session until the real close is available.
+    hist = hist[hist["Close"].notna()].reset_index(drop=True)
+    if hist.empty:
+        raise RuntimeError(f"no valid-close rows for {ticker}")
     hist["date_str"] = hist["Date"].dt.strftime("%Y-%m-%d")
     hist = compute_emas(hist)
     hist = compute_tp_trigger_flag(hist, params)
